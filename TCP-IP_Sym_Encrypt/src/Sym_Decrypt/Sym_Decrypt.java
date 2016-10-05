@@ -1,11 +1,14 @@
 package Sym_Decrypt;
 
+import java.io.IOException;
 import java.util.Random;
 import org.apache.commons.math3.primes.Primes;
 
+import SocketEncryption.ByteArrayConversions;
+
 
 public class Sym_Decrypt {
-	private byte [] MyPublicKey = null;
+	private byte [] MyPublicKey = new byte [16];
 	private long decryptKey = 3;
 	private long encryptKey = 101;
 	private long n = 0;
@@ -15,6 +18,8 @@ public class Sym_Decrypt {
 	}
 	
 	public Sym_Decrypt() {
+		System.out.print("Generating key");
+		
 		Random rand = new Random();
 		long prime1 = 0;
 		long prime2 = 0;
@@ -28,15 +33,53 @@ public class Sym_Decrypt {
 		
 		findKeys(z, rand);
 		
-		System.out.println(prime1);
-		System.out.println(prime2);
-		System.out.println(n);
-		System.out.println(z);
-		System.out.println(decryptKey);
-		System.out.println(encryptKey);
+		byte [] eKey;
+		byte [] nKey;
+		
+		try {
+			eKey = ByteArrayConversions.LongToByteArray(encryptKey);
+			nKey = ByteArrayConversions.LongToByteArray(n);
+			
+			for (int i = 0; i < 8; i ++)
+				MyPublicKey[i] = eKey[i];
+			
+			for (int i = 0; i < 8; i ++)
+				MyPublicKey[i + 8] = nKey[i];
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		System.out.println("\nPrime 1:" + prime1);
+		System.out.println("Prime 2:" + prime2);
+		System.out.println("n:" + n);
+		System.out.println("z:" + z);
+		System.out.println("dKey:" + decryptKey);
+		System.out.println("eKey:" + encryptKey);
+		
+		System.out.print("Byte array is ");
+
+		for (int i = 0; i < 16; i ++)
+			System.out.print(MyPublicKey[i] + "  ");
+		
+		byte [] temp = new byte[8];
+		
+		for (int i = 0; i < 8; i ++)
+			temp[i] = MyPublicKey[i];
+		
+		System.out.println("\n" + ByteArrayConversions.ByteArrayToLong(temp));
+		
+		for (int i = 0; i < 8; i ++)
+			temp[i] = MyPublicKey[i + 8];
+		
+		System.out.println(ByteArrayConversions.ByteArrayToLong(temp));
+		
+		
 	}
 	
 	private void findKeys (long z, Random rand) {
+		System.out.print(".");
+		
 		// Finds a prime for the encrypt key that is 100 < encryptKey < z
 		do {
 			encryptKey = Primes.nextPrime( 100 + rand.nextInt( (int)Math.sqrt( z ) ) );
