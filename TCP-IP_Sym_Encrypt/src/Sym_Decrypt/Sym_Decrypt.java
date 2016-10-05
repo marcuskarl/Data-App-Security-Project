@@ -6,7 +6,7 @@ import org.apache.commons.math3.primes.Primes;
 
 public class Sym_Decrypt {
 	private byte [] MyPublicKey = null;
-	private long decryptKey = 11;
+	private long decryptKey = 0;
 	private long n = 0;
 	
 	public byte [] GetPublicKey () {
@@ -27,9 +27,9 @@ public class Sym_Decrypt {
 		z = (prime1 - 1) * (prime2 - 1);
 		
 		// Finds a prime for the encrypt key that is 100 < encryptKey < z
-		while ( !Primes.isPrime( (int) encryptKey ) && (encryptKey < z) && (encryptKey % z != 0) ) {
+		do {
 			encryptKey = Primes.nextPrime( 100 + rand.nextInt( (int) z ) );
-		}
+		} while ( (encryptKey < z) && (encryptKey % z != 0) );
 		
 		while ( !( (encryptKey * decryptKey) % z == 1) )
 			decryptKey = Primes.nextPrime( (int) decryptKey + 1 );
