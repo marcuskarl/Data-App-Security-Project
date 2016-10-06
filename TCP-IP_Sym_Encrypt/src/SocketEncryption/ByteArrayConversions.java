@@ -21,6 +21,8 @@ public class ByteArrayConversions {
 			ByteArrayOutputStream bos = new ByteArrayOutputStream();
 			ObjectOutputStream oos = new ObjectOutputStream(bos);
 			oos.writeObject(x);
+			oos.close();
+			
 			return bos.toByteArray();
 			
 		} catch (IOException e) {
@@ -36,6 +38,8 @@ public class ByteArrayConversions {
 			ByteArrayInputStream bis = new ByteArrayInputStream(x);
 	        ObjectInputStream ois;
 			ois = new ObjectInputStream(bis);
+			bis.close();
+			
 			return (KeyObject)ois.readObject();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block

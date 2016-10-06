@@ -21,36 +21,59 @@ public class Client_Test {
 		
 		System.out.println("Test byte array: " + new BigInteger(t));
 		*/
-		for (int j = 0; j < 1; j++) {
+		//for (int j = 0; j < 999; j++) {
 			Sym_Decrypt x = new Sym_Decrypt();
 			Sym_Encrypt y = new Sym_Encrypt();
+			
 			y.ReceiveKey(x.GetPublicKey());
 			
 			Random rand = new Random();
 			
-			byte [] m = new byte[200];
+			byte [] m = new byte[255];
 			
-			for (int i = 0; i < m.length; i++)
-				//m[i] = (byte) 255;
-				m[i] = (byte) rand.nextInt(256);
-			
-			BigInteger c = y.Encrypt(m);
-			
-			byte [] testM = x.Decrypt(c);
-			
-			if (m.length != testM.length) {
-				System.out.println("Decrypted message length does not match original");
-				return;
-			}
-			
-			for (int i = 0; i < m.length; i++) {
-				if (m[i] != testM[i]) {
-					problems = true;
-					System.out.println("Difference found at element " + i);
+			for (int j = 0; j < 500; j++) {
+				
+				for (int i = 0; i < m.length; i++)
+					//m[i] = (byte) 255;
+					m[i] = (byte) rand.nextInt(255);
+				
+				BigInteger c = y.Encrypt(m);
+				//System.out.println("c bit length: " + c.bitLength() + ", m bit length: " + new BigInteger(m).bitLength());
+				byte [] testM = x.Decrypt(c);
+				
+				if (m.length != testM.length) {
+					System.out.println("Decrypted message length does not match original");
+					System.out.println("m:     " + new BigInteger(m) );
+					System.out.println("testM: " + new BigInteger(testM) );
+					
+					/*
+					for (int k = 0; k < 100; k++) {
+						for (int i = 0; i < m.length; i++)
+							m[i] = (byte) rand.nextInt(256);
+						
+						c = y.Encrypt(m);
+						//System.out.println("c bit length: " + c.bitLength() + ", m bit length: " + new BigInteger(m).bitLength());
+						testM = x.Decrypt(c);
+						
+						if (m.length != testM.length) {
+							System.out.println("Decrypted message length does not match original");
+							System.out.println("m:     " + new BigInteger(m) );
+							System.out.println("testM: " + new BigInteger(testM) );
+						}
+					}
+					return;
+					*/
 				}
-			}
-			System.out.println("m:     " + new BigInteger(m) );
-			System.out.println("testM: " + new BigInteger(testM) );
+				
+				for (int i = 0; i < m.length && i < testM.length; i++) {
+					if (m[i] != testM[i]) {
+						problems = true;
+						//System.out.println("Difference found at element " + i);
+					}
+				}
+				
+				if (!problems)
+					System.out.print(".");
 		}
 		
 		System.out.println("\nProblems found: " + problems);

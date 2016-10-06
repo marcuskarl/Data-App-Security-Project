@@ -69,16 +69,15 @@ public class SocketEncryption extends Socket {
 			
 			IncomingKey = (EncryptionObject) ois.readObject();
 			
+			oos.close();
+			ois.close();
+			
 			if ( IncomingKey.getKey() == true ) {
 				Encrypt.ReceiveKey( IncomingKey.getMsg() );
 				
 				// Send/Receive test message
 				swappedKeys = true;
 				return true;
-			}
-			else {
-				// Unable to resolve encryption keys
-				return false;
 			}
 		}
 		return false;
