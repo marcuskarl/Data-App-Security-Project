@@ -1,6 +1,7 @@
 package Sym_Decrypt;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.util.Random;
 import org.apache.commons.math3.primes.Primes;
 
@@ -15,6 +16,19 @@ public class Sym_Decrypt {
 	
 	public byte [] GetPublicKey () {
 		return MyPublicKey;
+	}
+	
+	public byte [] Decrypt (BigInteger c) {
+		BigInteger d = BigInteger.valueOf(decryptKey);
+		BigInteger nValue = BigInteger.valueOf(n);
+		BigInteger m;
+		
+		m = c.modPow(d, nValue);
+		
+		System.out.println("m is:" + m);
+		
+		
+		return m.toByteArray();
 	}
 	
 	public Sym_Decrypt() {
@@ -33,12 +47,9 @@ public class Sym_Decrypt {
 		
 		findKeys(z, rand);
 		
-		byte [] eKey;
-		byte [] nKey;
-		
 		try {
-			eKey = ByteArrayConversions.LongToByteArray(encryptKey);
-			nKey = ByteArrayConversions.LongToByteArray(n);
+			byte [] eKey = ByteArrayConversions.LongToByteArray(encryptKey);
+			byte [] nKey = ByteArrayConversions.LongToByteArray(n);
 			
 			for (int i = 0; i < 8; i ++)
 				MyPublicKey[i] = eKey[i];
@@ -50,31 +61,16 @@ public class Sym_Decrypt {
 			e.printStackTrace();
 		}
 		
+		/*
 		System.out.println("\nPrime 1:" + prime1);
 		System.out.println("Prime 2:" + prime2);
 		System.out.println("n:" + n);
 		System.out.println("z:" + z);
 		System.out.println("dKey:" + decryptKey);
 		System.out.println("eKey:" + encryptKey);
+		*/
 		
-		System.out.print("Byte array is ");
-
-		for (int i = 0; i < 16; i ++)
-			System.out.print(MyPublicKey[i] + "  ");
-		
-		byte [] temp = new byte[8];
-		
-		for (int i = 0; i < 8; i ++)
-			temp[i] = MyPublicKey[i];
-		
-		System.out.println("\n" + ByteArrayConversions.ByteArrayToLong(temp));
-		
-		for (int i = 0; i < 8; i ++)
-			temp[i] = MyPublicKey[i + 8];
-		
-		System.out.println(ByteArrayConversions.ByteArrayToLong(temp));
-		
-		
+		System.out.print("done.\n");
 	}
 	
 	private void findKeys (long z, Random rand) {

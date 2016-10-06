@@ -71,7 +71,7 @@ public class SocketEncryption extends Socket {
 			IncomingKey = (EncryptionObject) ois.readObject();
 			
 			if ( IncomingKey.getKey() == true ) {
-				Encrypt.SetPublicKey( IncomingKey.getMsg() );
+				Encrypt.ReceiveKey( IncomingKey.getMsg() );
 				
 				
 				// Send/Receive test message
