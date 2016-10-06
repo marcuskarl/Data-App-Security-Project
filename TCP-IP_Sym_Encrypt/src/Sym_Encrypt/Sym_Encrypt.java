@@ -3,21 +3,24 @@ package Sym_Encrypt;
 import java.math.BigInteger;
 import java.util.Random;
 
+import SocketEncryption.ByteArrayConversions;
+import SocketEncryption.KeyObject;
+
 public class Sym_Encrypt {
 	private BigInteger OthersEncryptValue;
 	private BigInteger OthersNValue;
 	
-	
-	
-	public boolean ReceiveKey (BigInteger[] x) {
+	public boolean ReceiveKey (byte [] x) {
 		if (x != null) {
-			OthersEncryptValue = x[0];
-			OthersNValue = x[1];
+			KeyObject Key = ByteArrayConversions.ByteArrayToKeyObject(x);
+			
+			OthersEncryptValue = Key.getEncryptValue();
+			OthersNValue = Key.getNValue();
 			
 			return true;
 		}
-		else
-			return false;
+		
+		return false;
 	}
 	
 	public BigInteger Encrypt(byte [] data) {

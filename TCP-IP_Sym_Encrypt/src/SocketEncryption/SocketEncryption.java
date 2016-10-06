@@ -59,7 +59,6 @@ public class SocketEncryption extends Socket {
 			
 			EncryptionObject OutGoingKey = new EncryptionObject();
 			EncryptionObject IncomingKey = null;
-			
 			OutGoingKey.setKey( true );
 			OutGoingKey.setMsg( Decrypt.GetPublicKey() );
 			
@@ -72,7 +71,6 @@ public class SocketEncryption extends Socket {
 			
 			if ( IncomingKey.getKey() == true ) {
 				Encrypt.ReceiveKey( IncomingKey.getMsg() );
-				
 				
 				// Send/Receive test message
 				swappedKeys = true;
