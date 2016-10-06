@@ -1,65 +1,56 @@
 package Sym_Decrypt;
 
-import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Random;
-import org.apache.commons.math3.primes.Primes;
-
-import SocketEncryption.ByteArrayConversions;
-
 
 public class Sym_Decrypt {
-	private byte [] MyPublicKey = new byte [16];
-	private long decryptKey = 3;
-	private long encryptKey = 101;
-	private long n = 0;
+	private BigInteger [] MyPublicKey = new BigInteger[2];
+	private BigInteger decryptKey;
+	private BigInteger encryptKey;
+	private BigInteger n = BigInteger.valueOf(1);
+	private int PrimeNumberBitLength = 1024;
 	
-	public byte [] GetPublicKey () {
+	public BigInteger [] GetPublicKey () {
 		return MyPublicKey;
 	}
 	
 	public byte [] Decrypt (BigInteger c) {
-		BigInteger d = BigInteger.valueOf(decryptKey);
-		BigInteger nValue = BigInteger.valueOf(n);
-		BigInteger m;
+		byte [] m = c.modPow(decryptKey, n).toByteArray();
+		byte [] temp = new byte[m.length - 1];
 		
-		m = c.modPow(d, nValue);
+		for (int i = 0; i < temp.length; i++)
+			temp[i] = m[i + 1];
 		
-		System.out.println("m is:" + m);
-		
-		
-		return m.toByteArray();
+		return temp;
 	}
 	
 	public Sym_Decrypt() {
-		System.out.print("Generating key");
+		System.out.print("Generating key...");
 		
 		Random rand = new Random();
-		long prime1 = 0;
-		long prime2 = 0;
-		long z = 0;
+		BigInteger prime1 = BigInteger.probablePrime(PrimeNumberBitLength, rand);
+		BigInteger prime2 = BigInteger.probablePrime(PrimeNumberBitLength, rand);
+		BigInteger z = BigInteger.valueOf(1);
 		
-		prime1 = Primes.nextPrime( rand.nextInt( 5000 ) + 1000 ); // Returns a random prime greater than 1000
-		prime2 = Primes.nextPrime( rand.nextInt( 1000 ) + 8000 ); // Returns a random prime greater than 8000
+		// n = prime1
+		n = n.multiply(prime1);
+		// n = prime1 * prime2
+		n = n.multiply(prime2);
 		
-		n = prime1 * prime2;
-		z = (prime1 - 1) * (prime2 - 1);
+		// z = prime1 - 1
+		z = z.multiply( prime1.subtract( BigInteger.valueOf(1)) );
+		// n = (prime1 - 1) * (prime2 - 1)
+		z = z.multiply( prime2.subtract( BigInteger.valueOf(1)) );
 		
-		findKeys(z, rand);
+		// Finds a prime for encryptKey that is z/2 < encryptKey < z
+		encryptKey = z.divide( BigInteger.valueOf(2) ).nextProbablePrime();
 		
-		try {
-			byte [] eKey = ByteArrayConversions.LongToByteArray(encryptKey);
-			byte [] nKey = ByteArrayConversions.LongToByteArray(n);
-			
-			for (int i = 0; i < 8; i ++)
-				MyPublicKey[i] = eKey[i];
-			
-			for (int i = 0; i < 8; i ++)
-				MyPublicKey[i + 8] = nKey[i];
-			
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		decryptKey = encryptKey.modInverse(z);
+		
+		MyPublicKey[0] = encryptKey;
+		MyPublicKey[1] = n;
+		
+		System.out.print("done.\n");
 		
 		/*
 		System.out.println("\nPrime 1:" + prime1);
@@ -67,32 +58,8 @@ public class Sym_Decrypt {
 		System.out.println("n:" + n);
 		System.out.println("z:" + z);
 		System.out.println("dKey:" + decryptKey);
-		System.out.println("eKey:" + encryptKey);
+		System.out.println("eKey:" + encryptKey);		
+		System.out.println("n is:" + n);
 		*/
-		
-		System.out.print("done.\n");
 	}
-	
-	private void findKeys (long z, Random rand) {
-		System.out.print(".");
-		
-		// Finds a prime for the encrypt key that is 100 < encryptKey < z
-		do {
-			encryptKey = Primes.nextPrime( 100 + rand.nextInt( (int)Math.sqrt( z ) ) );
-		} while ( encryptKey % z == 0 );
-		
-		decryptKey = 101;
-		
-		while ( !( (encryptKey * decryptKey) % z == 1) ) {
-			//System.out.println(decryptKey);
-			decryptKey = Primes.nextPrime( (int) decryptKey + 1 );
-			
-			// If decryptKey prime value is greater than z, 
-			// a new value will be found for the encryption key and the process starts over
-			if (decryptKey > z)
-				findKeys(z, rand);
-		}
-		
-	}
-	
 }

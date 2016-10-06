@@ -1,11 +1,12 @@
 package SocketEncryption;
 
 import java.io.Serializable;
+import java.math.BigInteger;
 
 public class EncryptionObject implements Serializable {
 	private static final long serialVersionUID = 01L;
 	private boolean isKey = false;
-	private byte [] msg = null;
+	private BigInteger [] msg = null;
 	private int [] segments = new int[3];
 	
 	public void setSegmentNum (int x) {
@@ -28,11 +29,11 @@ public class EncryptionObject implements Serializable {
 		isKey = x;
 	}
 	
-	public byte [] getMsg () {
+	public BigInteger [] getMsg () {
 		return msg;
 	}
 	
-	public void setMsg (byte [] x) {
+	public void setMsg (BigInteger [] x) {
 		msg = x;
 	}
 }

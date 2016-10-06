@@ -1,28 +1,18 @@
 package Sym_Encrypt;
 
 import java.math.BigInteger;
-
-import SocketEncryption.ByteArrayConversions;
+import java.util.Random;
 
 public class Sym_Encrypt {
-	private long OthersEncryptValue = 0;
-	private long OthersNValue = 0;
+	private BigInteger OthersEncryptValue;
+	private BigInteger OthersNValue;
 	
 	
 	
-	public boolean ReceiveKey (byte [] PK) {
-		if (PK != null) {
-			byte [] temp = new byte[8];
-			
-			for (int i = 0; i < temp.length; i ++)
-				temp[i] = PK[i];
-			
-			OthersEncryptValue = ByteArrayConversions.ByteArrayToLong(temp);
-			
-			for (int i = 0; i < temp.length; i ++)
-				temp[i] = PK[i + 8];
-			
-			OthersNValue = ByteArrayConversions.ByteArrayToLong(temp);
+	public boolean ReceiveKey (BigInteger[] x) {
+		if (x != null) {
+			OthersEncryptValue = x[0];
+			OthersNValue = x[1];
 			
 			return true;
 		}
@@ -31,15 +21,20 @@ public class Sym_Encrypt {
 	}
 	
 	public BigInteger Encrypt(byte [] data) {
-		BigInteger m = new BigInteger(data);
-		BigInteger e = BigInteger.valueOf(OthersEncryptValue);
-		BigInteger n = BigInteger.valueOf(OthersNValue);;
+		Random rand = new Random();
+		// Creates new byte array to stuff first element with a value less than 128
+		// This will prevent the BigInteger value from ever being negative (i.e. MSB = 1)
+		// By ensuring the first bit it always 0, if the BigInteger value is negative
+		// The message encryption and decryption is thrown off to negative value
+		byte [] temp = new byte [data.length + 1];
+		temp[0] = (byte) rand.nextInt(128);
+		for (int i = 1; i < temp.length; i++)
+			temp[i] = data[i - 1];
 		
-		System.out.println("m is: " + m);
-				
-		System.out.println("Encrypt value of: " + m.modPow(e, n));
+		// Converts the byte array to a BigInteger value
+		BigInteger m = new BigInteger(temp);
 		
-		return m.modPow(e, n);
+		return m.modPow(OthersEncryptValue, OthersNValue);
 	}
 	
 }
