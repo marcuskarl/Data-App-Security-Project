@@ -1,6 +1,7 @@
 package Client_Test;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.math.BigInteger;
 import java.util.Random;
 
@@ -13,8 +14,6 @@ public class Client_Test {
 	public static void main(String[] args) {
 		
 		SocketEncryption socket = new SocketEncryption();
-		
-		
 		
 		try {
 			socket.close();

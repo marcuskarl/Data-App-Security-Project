@@ -26,11 +26,8 @@ public class SocketEncryption extends Socket {
 	private int messageBlockByteArraySize = 220;
 	
 	public InputStream getInputStream() throws IOException {
-		// Gets inputstream from super
-		// Sets custom iS inputstream as super inputstream for use
 		iS = (IStream) super.getInputStream();
 		
-		// Returns custom inputstream object
 		return iS;
 	}
 	
