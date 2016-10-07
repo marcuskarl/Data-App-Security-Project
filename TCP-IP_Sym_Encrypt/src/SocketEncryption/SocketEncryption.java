@@ -5,8 +5,8 @@ import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
+import java.math.BigInteger;
 import java.net.Socket;
-
 import Sym_Decrypt.Sym_Decrypt;
 import Sym_Encrypt.Sym_Encrypt;
 
@@ -23,18 +23,19 @@ public class SocketEncryption extends Socket {
 	private Sym_Encrypt Encrypt = new Sym_Encrypt();
 	private Sym_Decrypt Decrypt = new Sym_Decrypt();
 	private boolean swappedKeys = false;
+	private int messageBlockByteArraySize = 220;
 	
 	public InputStream getInputStream() throws IOException {
 		// Gets inputstream from super
 		// Sets custom iS inputstream as super inputstream for use
-		iS.SetStream( super.getInputStream() );
+		iS = (IStream) super.getInputStream();
 		
 		// Returns custom inputstream object
 		return iS;
 	}
 	
 	public OutputStream getOutputStream() throws IOException {
-		oS.SetStream( super.getOutputStream() );
+		oS = (OStream) super.getOutputStream();
 		
 		return oS;
 	}
@@ -62,6 +63,8 @@ public class SocketEncryption extends Socket {
 			OutGoingKey.setKey( true );
 			OutGoingKey.setMsg( Decrypt.GetPublicKey() );
 			
+			getOutputStream();
+			getInputStream();
 			ObjectOutputStream oos = new ObjectOutputStream( oS );
 			ObjectInputStream ois = new ObjectInputStream( iS );
 			
@@ -83,100 +86,152 @@ public class SocketEncryption extends Socket {
 		return false;
 	}
 	
-	private class OStream extends OutputStream {
-		private OutputStream socketOStream = null;
+	private byte [] ParseMessage(byte[] b, long offSet, long l) {
+		byte [] arr = new byte[(int) l];
+		for (int i = 0; i < l; i++)
+			arr[i] = b[(int) (offSet + i)];
 		
-		private void SetStream(OutputStream os) {
-			socketOStream = os;
+		return arr;
+	}
+	
+	private void WriteMessage (byte [] x, boolean isKey) throws IOException {
+		if (x.length > messageBlockByteArraySize) {
+			int segNum = 1;
+			int totalSeg;
+			long offSet = 0;
+			byte [] array = null;
+			
+			//  If construct determines the total number segments the message needs to be broken up into
+			double testValue = x.length/messageBlockByteArraySize;
+			if (testValue != Math.floor(testValue))
+				totalSeg = (int) (Math.floor(testValue) + 1);
+			else
+				totalSeg = (int) testValue;
+			
+			// do while will break array into messageByteArraySize chunks and send them
+			// loop will exit when the last chunk of the byte array remaining is smaller than
+			// the messageByteArraySize size
+			do {
+				array = ParseMessage(x, offSet, messageBlockByteArraySize);
+				EncryptionObject m = CreateEncryptionObject(array, isKey, segNum++, totalSeg, x.length);
+				BigInteger c = Encrypt.Encrypt( ByteArrayConversions.AnyTypeToByteArray(m) );
+				ooS.writeObject(c);
+				offSet += messageBlockByteArraySize;
+			} while(offSet <= (x.length - messageBlockByteArraySize));
+			
+			// Sends final chunk of data remaining in the byte array
+			if (offSet != x.length) {
+				array = ParseMessage(x, offSet, x.length - offSet);
+				EncryptionObject m = CreateEncryptionObject(array, isKey, segNum++, totalSeg, x.length);
+				BigInteger c = Encrypt.Encrypt( ByteArrayConversions.AnyTypeToByteArray(m) );
+				ooS.writeObject(c);
+			}	
 		}
+		else { // If the message was smaller than the messageBlockByteArraySize size, it is sent
+			EncryptionObject m = CreateEncryptionObject(x, isKey, 1, 1, x.length);
+			BigInteger c = Encrypt.Encrypt( ByteArrayConversions.AnyTypeToByteArray(m) );
+			ooS.writeObject(c);
+		}
+	}
+	
+	private <T> byte [] ReadMessage() {
+		try {
+			BigInteger c = (BigInteger) oiS.readObject();
+			EncryptionObject m = (EncryptionObject) ByteArrayConversions.ByteArrayToAnyType( Decrypt.Decrypt(c) );
+			long size = m.getTotalByteSizeOfAllSegments();
+			int totalSeg = m.getMaxSegments();
+			long i = -1;
+			
+			byte [] temp = new byte [ (int) size ];
+			int currentSeg = m.getSegmentNum();
+			byte [] x = m.getMsg();
+			for (int j = 0; j < x.length; j++ ) {
+				i++;
+				temp[(int) i] = x[j];
+			}
+			
+			while ( currentSeg <= totalSeg && i < size ) {
+				c = (BigInteger) oiS.readObject();
+				m = (EncryptionObject) ByteArrayConversions.ByteArrayToAnyType( Decrypt.Decrypt(c) );
+				currentSeg = m.getSegmentNum();
+				x = m.getMsg();
+				for (int j = 0; j < x.length; j++ ) {
+					i++;
+					temp[(int) i] = x[j];
+				}
+				
+				return temp;
+			}
+		} catch (ClassNotFoundException | IOException e) {
+			e.printStackTrace();
+		}
+		
+		return null;
+	}
+	
+	private EncryptionObject CreateEncryptionObject (byte [] x, boolean isKey, int segNum, int totalSeg, long totalSize) {
+		EncryptionObject EO = new EncryptionObject();
+		
+		EO.setKey(isKey);
+		EO.setMsg(x);
+		EO.setSegmentNum(segNum);
+		EO.setMaxSegments(totalSeg);
+		EO.setTotalByteSizeOfAllSegments(totalSize);
+		
+		return EO;
+	}
+	
+	private class OStream extends OutputStream {
 		
 		@Override
 		public void write(int b) throws IOException {
-			int val = b;
-			// Call encryption on val....
-			
-			
-			// Write encrypted b to socket
-			socketOStream.write(val);
+			WriteMessage( ByteArrayConversions.AnyTypeToByteArray(b), false );
 		}
 		
 		@Override
-		public void write(byte[] b) throws IOException {
-			byte [] arr = new byte[b.length];
-			for (int i = 0; i < arr.length; i++)
-				arr[i] = b[i];
-
-			// Call encryption on arr....
-			
-			
-			
-			// Write encrypted b to socket
-			socketOStream.write(arr);
+		public void write(byte [] b) throws IOException {
+			WriteMessage(b, false);
 		}
 		
 		@Override
 		public void write(byte[] b, int off, int len) throws IOException {
-			
 			// Copies byte array from given array into a new array with specified elements to write from
 			byte [] arr = new byte[len];
 			for (int i = 0; i < len; i++)
 				arr[i] = b[off + i];
 			
-			// Call encryption on arr....
-			
-			
-			// Write encrypted array to socket
-			socketOStream.write(arr);
+			WriteMessage(arr, false);
 		}
 		
 	}
 	
 	private class IStream extends InputStream {
-		private InputStream socketIStream = null;
-		
-		private void SetStream(InputStream is) {
-			socketIStream = is;
-		}
-		
+
 		@Override
 		public int read(byte [] b) throws IOException {
-			// Creates array to read from socket input stream
-			byte [] arr = new byte[b.length];
-			int value = socketIStream.read(arr);
+			byte [] arr = ReadMessage();
 			
-			// Decrypt arr...
+			for (int i = 0; i < b.length && i < arr.length; i++)
+				b[i] = arr[i];
 			
-			
-			
-			// Changes b pointer to decrypted arr...
-			b = arr;
-			
-			return value;
+			return arr.length;
 		}
 		
 		@Override
 		public int read(byte [] b, int off, int len) throws IOException {
-			byte [] arr = new byte[len];
-			int value = socketIStream.read(arr, 0, len);
+			byte [] arr = ReadMessage();
 			
-			// Decrypt arr.....
+			for (int i = 0; i < b.length && i < arr.length && i < len; i++)
+				b[i + off] = arr[i];
 			
-			
-			
-			// Copies decrypted arr to specified location in b
-			for (int i = 0; i < len; i++)
-				b[off + i] = arr[i];
-			
-			return value;
+			return arr.length;
 		}
 
 		@Override
+		// This method needs changed.....it discards the rest of the byte array after returning
+		// the first byte
 		public int read() throws IOException {
-			int value = socketIStream.read();
-			
-			// Decrypt value.....
-			
-			return value;
+			return ReadMessage()[0];
 		}
 	}
 	
@@ -203,5 +258,7 @@ public class SocketEncryption extends Socket {
 		public ObjectInputStream getOIStream() {
 			return oiS;
 		}
+		
+		// public byte 
 	}
 }

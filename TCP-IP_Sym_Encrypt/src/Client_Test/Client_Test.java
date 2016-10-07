@@ -1,7 +1,10 @@
 package Client_Test;
 
+import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Random;
+
+import SocketEncryption.SocketEncryption;
 import Sym_Decrypt.Sym_Decrypt;
 import Sym_Encrypt.Sym_Encrypt;
 
@@ -9,9 +12,21 @@ public class Client_Test {
 
 	public static void main(String[] args) {
 		
-		boolean problems = false;
+		SocketEncryption socket = new SocketEncryption();
+		
+		
+		
+		try {
+			socket.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
 		
 		/*
+		boolean problems = false;
+		
+		
 		byte [] t = new byte[4];
 		
 		t[0] = (byte) 127;
@@ -20,10 +35,12 @@ public class Client_Test {
 		t[3] = (byte) 255;
 		
 		System.out.println("Test byte array: " + new BigInteger(t));
-		*/
+		
 		//for (int j = 0; j < 999; j++) {
 			Sym_Decrypt x = new Sym_Decrypt();
 			Sym_Encrypt y = new Sym_Encrypt();
+			
+			
 			
 			y.ReceiveKey(x.GetPublicKey());
 			
@@ -31,7 +48,7 @@ public class Client_Test {
 			
 			byte [] m = new byte[255];
 			
-			for (int j = 0; j < 500; j++) {
+			for (int j = 0; j < 1; j++) {
 				
 				for (int i = 0; i < m.length; i++)
 					//m[i] = (byte) 255;
@@ -46,7 +63,7 @@ public class Client_Test {
 					System.out.println("m:     " + new BigInteger(m) );
 					System.out.println("testM: " + new BigInteger(testM) );
 					
-					/*
+					
 					for (int k = 0; k < 100; k++) {
 						for (int i = 0; i < m.length; i++)
 							m[i] = (byte) rand.nextInt(256);
@@ -62,7 +79,7 @@ public class Client_Test {
 						}
 					}
 					return;
-					*/
+					
 				}
 				
 				for (int i = 0; i < m.length && i < testM.length; i++) {
@@ -77,5 +94,8 @@ public class Client_Test {
 		}
 		
 		System.out.println("\nProblems found: " + problems);
+		
+		*/
 	}
+	
 }

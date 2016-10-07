@@ -10,7 +10,7 @@ public class Sym_Encrypt {
 	
 	public boolean ReceiveKey (byte [] x) {
 		if (x != null) {
-			KeyObject Key = ByteArrayConversions.ByteArrayToKeyObject(x);
+			KeyObject Key = ByteArrayConversions.ByteArrayToAnyType(x);
 			OthersEncryptValue = Key.getEncryptValue();
 			OthersNValue = Key.getNValue();
 			return true;

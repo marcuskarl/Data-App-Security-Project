@@ -7,13 +7,30 @@ public class EncryptionObject implements Serializable {
 	private boolean isKey = false;
 	private byte [] msg = null;
 	private int [] segments = new int[2];
+	private long totalByteSizeOfAllSegments = 0;
+	
+	public void setTotalByteSizeOfAllSegments (long totalSize) {
+		totalByteSizeOfAllSegments = totalSize;
+	}
+	
+	public long getTotalByteSizeOfAllSegments () {
+		return totalByteSizeOfAllSegments;
+	}
 	
 	public void setSegmentNum (int x) {
 		segments[0] = x;
 	}
 	
-	public void setMaxSegments (int x){
+	public int getSegmentNum () {
+		return segments[0];
+	}
+	
+	public void setMaxSegments (int x) {
 		segments[1] = x;
+	}
+	
+	public int getMaxSegments () {
+		return segments[1];
 	}
 	
 	public boolean getKey () {

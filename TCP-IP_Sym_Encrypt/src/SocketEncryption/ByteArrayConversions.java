@@ -16,7 +16,7 @@ public class ByteArrayConversions {
 		return ByteBuffer.wrap(x).getLong();
 	}
 	
-	public static byte [] KeyObjectToByteArray (KeyObject x) {
+	public static <T> byte [] AnyTypeToByteArray (T x) {
 		try {
 			ByteArrayOutputStream bos = new ByteArrayOutputStream();
 			ObjectOutputStream oos = new ObjectOutputStream(bos);
@@ -33,14 +33,32 @@ public class ByteArrayConversions {
 		return null;
 	}
 	
-	public static KeyObject ByteArrayToKeyObject (byte[] x) {
+	public static <T> byte [] AnyTypeToByteArray (T [] x) {
+		try {
+			ByteArrayOutputStream bos = new ByteArrayOutputStream();
+			ObjectOutputStream oos = new ObjectOutputStream(bos);
+			oos.writeObject(x);
+			oos.close();
+			
+			return bos.toByteArray();
+			
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		return null;
+	}
+	
+	@SuppressWarnings("unchecked")
+	public static <T> T ByteArrayToAnyType (byte [] x) {
 		try {
 			ByteArrayInputStream bis = new ByteArrayInputStream(x);
 	        ObjectInputStream ois;
 			ois = new ObjectInputStream(bis);
 			bis.close();
 			
-			return (KeyObject)ois.readObject();
+			return (T) ois.readObject();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

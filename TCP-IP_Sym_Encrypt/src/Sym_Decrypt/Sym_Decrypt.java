@@ -17,7 +17,7 @@ public class Sym_Decrypt {
 		Key.SetEncryptValue(encryptKey);
 		Key.SetNValue(n);
 		
-		return ByteArrayConversions.KeyObjectToByteArray(Key);
+		return ByteArrayConversions.AnyTypeToByteArray(Key);
 	}
 	
 	public byte [] Decrypt (BigInteger c) {
@@ -37,11 +37,7 @@ public class Sym_Decrypt {
 	}
 	
 	public Sym_Decrypt() {
-		System.out.print("Generating key...");
 		createKeys();
-		System.out.print("done.\n");
-		
-		System.out.println("n bit length: " + n.bitLength() + ",e bit length: " + encryptKey.bitLength() + ",d bit length: " + decryptKey.bitLength());
 	}
 	
 	private void createKeys() {
@@ -49,9 +45,6 @@ public class Sym_Decrypt {
 		BigInteger prime1 = new BigInteger(PrimeNumberBitLength, 20, rand);
 		BigInteger prime2 = new BigInteger(PrimeNumberBitLength, 20, rand);
 		BigInteger z = BigInteger.valueOf(1);
-		
-		
-		System.out.print("found primes...");
 		
 		// n = prime1
 		n = n.multiply(prime1);
@@ -62,28 +55,8 @@ public class Sym_Decrypt {
 		z = z.multiply( prime1.subtract( BigInteger.valueOf(1) ) );
 		// z = (prime1 - 1) * (prime2 - 1)
 		z = z.multiply( prime2.subtract( BigInteger.valueOf(1)) );
-		
-		
-		/*
-		// Finds a prime for encryptKey that is z/2 < encryptKey < z
-		// Since encryptKey > z/2, encryptKey will never be a factor of z
-		encryptKey = z.divide( BigInteger.valueOf(2) ).nextProbablePrime();
-		
-		// decryptKey is set as modular inverse of encryptKey mod z
-		decryptKey = encryptKey.modInverse(z);
-		*/
-		
-		
+
 		encryptKey = new BigInteger(PrimeNumberBitLength * 2, 20, rand);
-		
 		decryptKey = encryptKey.modInverse(z);
-		/*
-		while ( !decryptKey.isProbablePrime(10) || (0 == encryptKey.mod(z).intValue() )	|| !encryptKey.isProbablePrime(10) ) {
-			encryptKey = encryptKey.nextProbablePrime();
-			decryptKey = encryptKey.modInverse(z);
-			System.out.print(".");
-		}
-		*/
-		
 	}
 }
