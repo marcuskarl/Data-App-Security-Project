@@ -3,49 +3,53 @@ package SocketEncryption;
 import java.io.Serializable;
 
 public class EncryptionObject implements Serializable {
+	// Variables are only given a single character to minimize serialized size for encryption block
+	// Segments are used for messages greater than the given block size. In this case the message
+	// is broken up into multiple segments for recompiling after transmission.
 	private static final long serialVersionUID = 01L;
-	private boolean isKey = false;
-	private byte [] msg = null;
-	private int [] segments = new int[2];
-	private long totalByteSizeOfAllSegments = 0;
+	private boolean k = false;	// Flags if object has public key as msg
+	private byte [] m = null;	// The message being sent
+	private int s = 0;			// The segment number of this object
+	private int t = 0;			// The total number of segments for message
+	private long z = 0;			// The total byte size of all segments combined
 	
 	public void setTotalByteSizeOfAllSegments (long totalSize) {
-		totalByteSizeOfAllSegments = totalSize;
+		z = totalSize;
 	}
 	
 	public long getTotalByteSizeOfAllSegments () {
-		return totalByteSizeOfAllSegments;
+		return z;
 	}
 	
 	public void setSegmentNum (int x) {
-		segments[0] = x;
+		s = x;
 	}
 	
 	public int getSegmentNum () {
-		return segments[0];
+		return s;
 	}
 	
 	public void setMaxSegments (int x) {
-		segments[1] = x;
+		t = x;
 	}
 	
 	public int getMaxSegments () {
-		return segments[1];
+		return t;
 	}
 	
 	public boolean getKey () {
-		return isKey;
+		return k;
 	}
 	
 	public void setKey (boolean x) {
-		isKey = x;
+		k = x;
 	}
 	
 	public byte [] getMsg () {
-		return msg;
+		return m;
 	}
 	
 	public void setMsg (byte [] x) {
-		msg = x;
+		m = x;
 	}
 }

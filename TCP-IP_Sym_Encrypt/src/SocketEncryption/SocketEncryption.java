@@ -21,10 +21,10 @@ public class SocketEncryption extends Socket {
 	private IStream iS = new IStream();
 	private OOStream ooS = null;
 	private OIStream oiS = null;
-	private ASym_Encrypt Encrypt = new ASym_Encrypt();
+	public ASym_Encrypt Encrypt = new ASym_Encrypt();
 	private ASym_Decrypt Decrypt = new ASym_Decrypt();
 	private boolean swappedKeys = false;
-	private int messageBlockByteArraySize = 220;
+	private int messageBlockByteArraySize = 135;
 	
 	public InputStream getInputStream() throws IOException {
 		iS = (IStream) super.getInputStream();
@@ -49,7 +49,7 @@ public class SocketEncryption extends Socket {
 	}
 	
 	public boolean SwapPublicKeys () throws Exception{
-		if ( this.isConnected() && !swappedKeys ) {
+		//if ( this.isConnected() && !swappedKeys ) {
 			
 			// Send signature message
 			// Verify signature of remote user
@@ -61,17 +61,19 @@ public class SocketEncryption extends Socket {
 			OutGoingKey.setKey( true );
 			OutGoingKey.setMsg( Decrypt.GetPublicKey() );
 			
-			getOutputStream();
-			getInputStream();
-			ObjectOutputStream oos = new ObjectOutputStream( oS );
-			ObjectInputStream ois = new ObjectInputStream( iS );
+			//getOutputStream();
+			//getInputStream();
+			//ObjectOutputStream oos = new ObjectOutputStream( oS );
+			//ObjectInputStream ois = new ObjectInputStream( iS );
 			
-			oos.writeObject( OutGoingKey );
+			// oos.writeObject( OutGoingKey );
 			
-			IncomingKey = (EncryptionObject) ois.readObject();
+			// IncomingKey = (EncryptionObject) ois.readObject();
 			
-			oos.close();
-			ois.close();
+			IncomingKey = OutGoingKey;
+			
+			// oos.close();
+			// ois.close();
 			
 			if ( IncomingKey.getKey() == true ) {
 				Encrypt.ReceiveKey( IncomingKey.getMsg() );
@@ -79,7 +81,7 @@ public class SocketEncryption extends Socket {
 				// Send/Receive test message
 				swappedKeys = true;
 				return true;
-			}
+		//	}
 		}
 		return false;
 	}

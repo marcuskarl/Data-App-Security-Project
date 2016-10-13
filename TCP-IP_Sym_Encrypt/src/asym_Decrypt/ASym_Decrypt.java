@@ -17,6 +17,8 @@ public class ASym_Decrypt {
 		Key.SetEncryptValue(encryptKey);
 		Key.SetNValue(n);
 		
+		System.out.println("n bit length: " + n.bitLength());
+		
 		return ByteArrayConversions.AnyTypeToByteArray(Key);
 	}
 	

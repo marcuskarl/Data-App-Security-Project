@@ -1,13 +1,13 @@
 package Client_Test;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
+import java.io.ObjectOutputStream;
 import java.math.BigInteger;
-import java.util.Random;
 
+import SocketEncryption.ByteArrayConversions;
+import SocketEncryption.EncryptionObject;
 import SocketEncryption.SocketEncryption;
-import asym_Decrypt.ASym_Decrypt;
-import asym_Encrypt.ASym_Encrypt;
 
 public class Client_Test {
 
@@ -15,86 +15,43 @@ public class Client_Test {
 		
 		SocketEncryption socket = new SocketEncryption();
 		
+		byte [] y = new byte [135];
+		
+		for (int i = 0; i < y.length; i++)
+			y[i] = (byte) 5;
+		
 		try {
-			socket.close();
+			socket.SwapPublicKeys();
+			// socket.close();
 		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		EncryptionObject x = new EncryptionObject();
+		
+		x.setMsg(y);
+		x.setMaxSegments(1);
+		x.setKey(false);
+		x.setSegmentNum(1);
+		x.setTotalByteSizeOfAllSegments(y.length);
+		
+		BigInteger c = socket.Encrypt.Encrypt( ByteArrayConversions.AnyTypeToByteArray(x) );
+		
+		try {
+			ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			ObjectOutputStream oos = new ObjectOutputStream(baos);
+			 
+			oos.writeObject(x);
+			oos.close();
+			System.out.println( baos.size() );
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
 		
-		/*
-		boolean problems = false;
-		
-		
-		byte [] t = new byte[4];
-		
-		t[0] = (byte) 127;
-		t[1] = (byte) 255;
-		t[2] = (byte) 255;
-		t[3] = (byte) 255;
-		
-		System.out.println("Test byte array: " + new BigInteger(t));
-		
-		//for (int j = 0; j < 999; j++) {
-			Sym_Decrypt x = new Sym_Decrypt();
-			Sym_Encrypt y = new Sym_Encrypt();
-			
-			
-			
-			y.ReceiveKey(x.GetPublicKey());
-			
-			Random rand = new Random();
-			
-			byte [] m = new byte[255];
-			
-			for (int j = 0; j < 1; j++) {
-				
-				for (int i = 0; i < m.length; i++)
-					//m[i] = (byte) 255;
-					m[i] = (byte) rand.nextInt(255);
-				
-				BigInteger c = y.Encrypt(m);
-				//System.out.println("c bit length: " + c.bitLength() + ", m bit length: " + new BigInteger(m).bitLength());
-				byte [] testM = x.Decrypt(c);
-				
-				if (m.length != testM.length) {
-					System.out.println("Decrypted message length does not match original");
-					System.out.println("m:     " + new BigInteger(m) );
-					System.out.println("testM: " + new BigInteger(testM) );
-					
-					
-					for (int k = 0; k < 100; k++) {
-						for (int i = 0; i < m.length; i++)
-							m[i] = (byte) rand.nextInt(256);
-						
-						c = y.Encrypt(m);
-						//System.out.println("c bit length: " + c.bitLength() + ", m bit length: " + new BigInteger(m).bitLength());
-						testM = x.Decrypt(c);
-						
-						if (m.length != testM.length) {
-							System.out.println("Decrypted message length does not match original");
-							System.out.println("m:     " + new BigInteger(m) );
-							System.out.println("testM: " + new BigInteger(testM) );
-						}
-					}
-					return;
-					
-				}
-				
-				for (int i = 0; i < m.length && i < testM.length; i++) {
-					if (m[i] != testM[i]) {
-						problems = true;
-						//System.out.println("Difference found at element " + i);
-					}
-				}
-				
-				if (!problems)
-					System.out.print(".");
-		}
-		
-		System.out.println("\nProblems found: " + problems);
-		
-		*/
 	}
-	
 }
