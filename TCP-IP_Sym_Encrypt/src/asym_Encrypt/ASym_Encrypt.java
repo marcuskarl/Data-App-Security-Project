@@ -1,10 +1,10 @@
-package Sym_Encrypt;
+package asym_Encrypt;
 
 import java.math.BigInteger;
 import SocketEncryption.ByteArrayConversions;
 import SocketEncryption.KeyObject;
 
-public class Sym_Encrypt {
+public class ASym_Encrypt {
 	private BigInteger OthersEncryptValue;
 	private BigInteger OthersNValue;
 	

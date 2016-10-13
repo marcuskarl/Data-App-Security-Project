@@ -6,8 +6,8 @@ import java.math.BigInteger;
 import java.util.Random;
 
 import SocketEncryption.SocketEncryption;
-import Sym_Decrypt.Sym_Decrypt;
-import Sym_Encrypt.Sym_Encrypt;
+import asym_Decrypt.ASym_Decrypt;
+import asym_Encrypt.ASym_Encrypt;
 
 public class Client_Test {
 

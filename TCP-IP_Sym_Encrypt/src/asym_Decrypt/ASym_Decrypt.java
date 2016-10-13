@@ -1,4 +1,4 @@
-package Sym_Decrypt;
+package asym_Decrypt;
 
 import java.math.BigInteger;
 import java.util.Random;
@@ -6,7 +6,7 @@ import java.util.Random;
 import SocketEncryption.ByteArrayConversions;
 import SocketEncryption.KeyObject;
 
-public class Sym_Decrypt {
+public class ASym_Decrypt {
 	private BigInteger decryptKey;
 	private BigInteger encryptKey;
 	private BigInteger n = BigInteger.valueOf(1);
@@ -36,7 +36,7 @@ public class Sym_Decrypt {
 		return temp;
 	}
 	
-	public Sym_Decrypt() {
+	public ASym_Decrypt() {
 		createKeys();
 	}
 	

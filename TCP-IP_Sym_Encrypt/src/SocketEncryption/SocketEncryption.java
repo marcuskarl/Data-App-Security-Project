@@ -7,8 +7,9 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.math.BigInteger;
 import java.net.Socket;
-import Sym_Decrypt.Sym_Decrypt;
-import Sym_Encrypt.Sym_Encrypt;
+
+import asym_Decrypt.ASym_Decrypt;
+import asym_Encrypt.ASym_Encrypt;
 
 // Class extends Socket in order to override read and write methods from inputstream and outputstream
 // The methods are overridden in order to provide a seam less opportunity to user for encryption and decryption
@@ -20,8 +21,8 @@ public class SocketEncryption extends Socket {
 	private IStream iS = new IStream();
 	private OOStream ooS = null;
 	private OIStream oiS = null;
-	private Sym_Encrypt Encrypt = new Sym_Encrypt();
-	private Sym_Decrypt Decrypt = new Sym_Decrypt();
+	private ASym_Encrypt Encrypt = new ASym_Encrypt();
+	private ASym_Decrypt Decrypt = new ASym_Decrypt();
 	private boolean swappedKeys = false;
 	private int messageBlockByteArraySize = 220;
 	
