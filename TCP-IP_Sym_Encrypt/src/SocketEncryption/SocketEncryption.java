@@ -21,10 +21,11 @@ public class SocketEncryption extends Socket {
 	private IStream iS = new IStream();
 	private OOStream ooS = null;
 	private OIStream oiS = null;
-	public ASym_Encrypt Encrypt = new ASym_Encrypt();
+	private ASym_Encrypt Encrypt = new ASym_Encrypt();
 	private ASym_Decrypt Decrypt = new ASym_Decrypt();
 	private boolean swappedKeys = false;
-	private int messageBlockByteArraySize = 135;
+	private int messageBlockByteArraySize = 135; // Message block size of 135 lets the EncryptionObject 
+												 // size be 254 bytes after serialization
 	
 	public InputStream getInputStream() throws IOException {
 		iS = (IStream) super.getInputStream();
@@ -49,7 +50,7 @@ public class SocketEncryption extends Socket {
 	}
 	
 	public boolean SwapPublicKeys () throws Exception{
-		//if ( this.isConnected() && !swappedKeys ) {
+		if ( this.isConnected() && !swappedKeys ) {
 			
 			// Send signature message
 			// Verify signature of remote user
@@ -61,19 +62,19 @@ public class SocketEncryption extends Socket {
 			OutGoingKey.setKey( true );
 			OutGoingKey.setMsg( Decrypt.GetPublicKey() );
 			
-			//getOutputStream();
-			//getInputStream();
-			//ObjectOutputStream oos = new ObjectOutputStream( oS );
-			//ObjectInputStream ois = new ObjectInputStream( iS );
+			getOutputStream();
+			getInputStream();
+			ObjectOutputStream oos = new ObjectOutputStream( oS );
+			ObjectInputStream ois = new ObjectInputStream( iS );
 			
-			// oos.writeObject( OutGoingKey );
+			oos.writeObject( OutGoingKey );
 			
-			// IncomingKey = (EncryptionObject) ois.readObject();
+			IncomingKey = (EncryptionObject) ois.readObject();
 			
 			IncomingKey = OutGoingKey;
 			
-			// oos.close();
-			// ois.close();
+			oos.close();
+			ois.close();
 			
 			if ( IncomingKey.getKey() == true ) {
 				Encrypt.ReceiveKey( IncomingKey.getMsg() );
@@ -81,7 +82,7 @@ public class SocketEncryption extends Socket {
 				// Send/Receive test message
 				swappedKeys = true;
 				return true;
-		//	}
+			}
 		}
 		return false;
 	}
@@ -236,7 +237,7 @@ public class SocketEncryption extends Socket {
 	}
 	
 	private class OOStream extends ObjectOutputStream {
-		ObjectOutputStream ooS = null;
+		private ObjectOutputStream ooS = null;
 		
 		OOStream ( OutputStream x) throws IOException {
 			ooS = new ObjectOutputStream( x );
@@ -249,7 +250,7 @@ public class SocketEncryption extends Socket {
 	}
 	
 	private class OIStream extends ObjectInputStream {
-		ObjectInputStream oiS = null;
+		private ObjectInputStream oiS = null;
 		
 		OIStream ( InputStream x) throws IOException {
 			oiS = new ObjectInputStream( x );
