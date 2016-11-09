@@ -7,6 +7,31 @@ public class sym_AES_Based {
 	
 	private byte [] key = null;
 	
+	private byte [][] SubBlockEnc = new byte [16][16];
+	private byte [][] SubBlockDec = new byte [16][16];
+	
+	public sym_AES_Based () {
+		int blockSize = 16;
+		for (int i = 0, t = 0; i < blockSize; i++)
+			for (int j = 0; j < blockSize; j++, t++)
+				SubBlockEnc[i][j] = (byte) t;
+		
+		int row = 0,
+			col = 0;
+		
+		SubBlockEnc = ShiftRow(SubBlockEnc, 2, blockSize);
+		SubBlockEnc = ShiftCol(SubBlockEnc, 2, blockSize);
+		
+		for (int i = 0, t = 0; i < blockSize; i++)
+			for (int j = 0; j < blockSize; j++, t++) {
+				col = SubBlockEnc[i][j] % blockSize;
+				row = (int) SubBlockEnc[i][j] / blockSize;
+				
+				SubBlockDec[row][col] = (byte) (i * blockSize + j);
+			}
+		
+	}
+	
 	
 	public void Encrypt(byte [] x) {
 		
@@ -19,8 +44,8 @@ public class sym_AES_Based {
 		
 		for (int i = 0; i < blockCount; i++)
 			for (int j = 0; j < matrixBlock; j++) {
-				arr[i] = ShiftRow(arr[i], j % matrixBlock);
-				arr[i] = ShiftCol(arr[i], j % matrixBlock);
+				arr[i] = ShiftRow(arr[i], j % matrixBlock, matrixBlock);
+				arr[i] = ShiftCol(arr[i], j % matrixBlock, matrixBlock);
 		}
 		
 		for (int i = 0, k = 0; i < blockCount; i++)
@@ -29,23 +54,56 @@ public class sym_AES_Based {
 					x[k] = arr[i][j][l];
 	}
 	
-	private byte [][] ShiftRow(byte [][] x, int amount) {
-		byte [][] tempRow = new byte[matrixBlock][matrixBlock];
+	private byte [][] ShiftRow(byte [][] x, int amount, int blockSize) {
+		byte [][] arr = new byte[blockSize][blockSize];
 		
-		for (int i = 0; i < matrixBlock; i++)
-			for (int j = 0; j < matrixBlock; j++) 
-				tempRow[(i + amount) % 4][j] = x[i][j]; 
+		for (int i = 0; i < blockSize; i++)
+			for (int j = 0; j < blockSize; j++) 
+				arr[(i + amount) % blockSize][j] = x[i][j]; 
 		
-		return tempRow;
+		return arr;
 	}
 	
-	private byte [][] ShiftCol(byte [][] x, int amount) {
-		byte [][] tempRow = new byte[matrixBlock][matrixBlock];
+	private byte [][] ShiftCol(byte [][] x, int amount, int blockSize) {
+		byte [][] arr = new byte[blockSize][blockSize];
 		
-		for (int i = 0; i < matrixBlock; i++)
-			for (int j = 0; j < matrixBlock; j++) 
-				tempRow[i][(j + amount) % matrixBlock] = x[i][j]; 
+		for (int i = 0; i < blockSize; i++)
+			for (int j = 0; j < blockSize; j++) 
+				arr[i][(j + amount) % blockSize] = x[i][j]; 
 		
-		return tempRow;
+		return arr;
+	}
+
+	private byte [][] SubEncrypyt(byte [][] x, int blockSize) {
+		byte [][] arr = new byte [blockSize][blockSize];
+		int col = 0,
+			row = 0;
+		
+		
+		for (int i = 0; i < blockSize; i++)
+			for (int j = 0; j < blockSize; j++) {
+				col = x[i][j] % blockSize;
+				row = (int) x[i][j] / blockSize;
+				
+				arr[i][j] = SubBlockEnc[row][col];
+			}
+		
+		return arr;
+	}
+	
+	private byte [][] SubDecrypyt(byte [][] x, int blockSize) {
+		byte [][] arr = new byte [blockSize][blockSize];
+		int col = 0,
+			row = 0;
+		
+		for (int i = 0; i < blockSize; i++)
+			for (int j = 0; j < blockSize; j++) {
+				col = x[i][j] % blockSize;
+				row = (int) x[i][j] / blockSize;
+				
+				arr[i][j] = SubBlockDec[row][col];
+			}
+		
+		return arr;
 	}
 }
