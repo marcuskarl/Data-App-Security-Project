@@ -57,19 +57,38 @@ public class SocketEncryption extends Socket {
 			// Verify signature of remote user
 			
 			
-			
+			/*
 			EncryptionObject OutGoingKey = new EncryptionObject();
 			EncryptionObject IncomingKey = null;
 			OutGoingKey.setKey( true );
 			OutGoingKey.setMsg( Decrypt.GetPublicKey() );
+			
+			
+			*/
+			
+			byte [] key = Decrypt.GetPublicKey();
+			
+			byte [] outMsgWithKey = new byte [ 9 + key.length ];
+			byte [] sizeOfKey = ByteArrayConversions.LongToByteArray((long) key.length);
+			
+			outMsgWithKey[0] = (byte) 0;
+			
+			for (int i = 0; i < sizeOfKey.length; i++)
+				outMsgWithKey[i + 1] = sizeOfKey[i];
+			
+			for (int i = 0; i < outMsgWithKey.length; i++)
+				outMsgWithKey[i + 9] = key[i]; 
+			
 			
 			getOutputStream();
 			getInputStream();
 			ObjectOutputStream oos = new ObjectOutputStream( oS );
 			ObjectInputStream ois = new ObjectInputStream( iS );
 			
-			oos.writeObject( OutGoingKey );
+			oos.writeObject( outMsgWithKey );
 			
+			
+			//
 			IncomingKey = (EncryptionObject) ois.readObject();
 			
 			IncomingKey = OutGoingKey;
@@ -136,6 +155,12 @@ public class SocketEncryption extends Socket {
 		// loop will exit when all bytes are sent
 		do {
 			msgToSend = new byte [ msgSize ];
+			
+			if (isKey) 
+				msgToSend[0] = (byte) 0;
+			else
+				msgToSend[0] = (byte) 1;
+			
 			BuildMessage(msgToSend, x, startingByte, totalSize, msgSize);
 			BigInteger c = Encrypt.Encrypt( msgToSend );
 			ooS.writeObject(c);
