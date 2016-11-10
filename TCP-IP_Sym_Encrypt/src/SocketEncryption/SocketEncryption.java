@@ -88,7 +88,7 @@ public class SocketEncryption extends Socket {
 			oos.writeObject( outMsgWithKey );
 			
 			
-			//
+			/*
 			IncomingKey = (EncryptionObject) ois.readObject();
 			
 			IncomingKey = OutGoingKey;
@@ -103,6 +103,7 @@ public class SocketEncryption extends Socket {
 				swappedKeys = true;
 				return true;
 			}
+			*/
 		}
 		return false;
 	}
