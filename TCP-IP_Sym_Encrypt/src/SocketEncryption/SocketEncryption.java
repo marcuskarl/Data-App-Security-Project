@@ -79,7 +79,7 @@ public class SocketEncryption extends Socket {
 			for (int i = 0; i < outMsgWithKey.length; i++)
 				outMsgWithKey[i + 9] = key[i]; 
 			
-			
+			// test
 			getOutputStream();
 			getInputStream();
 			ObjectOutputStream oos = new ObjectOutputStream( oS );
