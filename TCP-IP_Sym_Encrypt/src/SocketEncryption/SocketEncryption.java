@@ -7,6 +7,7 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.math.BigInteger;
 import java.net.Socket;
+import java.util.Random;
 
 import asym_Decrypt.ASym_Decrypt;
 import asym_Encrypt.ASym_Encrypt;
@@ -98,6 +99,7 @@ public class SocketEncryption extends Socket {
 	*/
 	
 	private void BuildMessage(byte[] x, byte [] sourceArray, long startingByte, long totalSize, int msgSize) {
+		Random rand = new Random();
 		for (int i = 0; i < msgSize; i++) {
 			if (i == 0){
 				try {
@@ -120,7 +122,7 @@ public class SocketEncryption extends Socket {
 			else if (startingByte < totalSize)
 				x[i] = sourceArray[(int) startingByte++];
 			else
-				x[i] = (byte) 255;
+				x[i] = (byte) rand.nextInt(255);
 		}
 	}
 	
@@ -141,7 +143,6 @@ public class SocketEncryption extends Socket {
 	}
 	
 	private void ParseMessage (byte[] sourceArray, byte [] destArray,long startByte, long totalSize) {
-		
 		for (int i = 8; i < sourceArray.length; i++)
 			if (startByte < totalSize)
 				destArray[(int) startByte++] = sourceArray[i];
@@ -150,9 +151,7 @@ public class SocketEncryption extends Socket {
 	private <T> byte [] ReadMessage() {
 		try {
 			BigInteger c = (BigInteger) oiS.readObject();
-			
 			byte [] newMSG = Decrypt.Decrypt(c);
-			
 			byte [] tSize = new byte [Long.BYTES];
 			
 			for (int i = 0; i < tSize.length; i++)
@@ -160,7 +159,6 @@ public class SocketEncryption extends Socket {
 			
 			long startingByte = 0;
 			long totalSize = ByteArrayConversions.ByteArrayToLong(tSize);
-			
 			byte [] msgRcvd = new byte [(int) totalSize];
 			
 			ParseMessage(newMSG, msgRcvd, startingByte, totalSize);
