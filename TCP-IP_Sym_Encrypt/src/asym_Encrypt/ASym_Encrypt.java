@@ -8,6 +8,10 @@ public class ASym_Encrypt {
 	private BigInteger OthersEncryptValue;
 	private BigInteger OthersNValue;
 	
+	public BigInteger getOthersNValue() {
+		return OthersNValue;
+	}
+	
 	public boolean ReceiveKey (byte [] x) {
 		if (x != null) {
 			KeyObject Key = ByteArrayConversions.ByteArrayToAnyType(x);
@@ -24,13 +28,13 @@ public class ASym_Encrypt {
 		// after converting to two's complement
 		// If the BigInteger value is negative the message encryption and decryption 
 		// has errors thrown due to negative values in the modulus operation
-		byte [] temp = new byte [data.length + 1];
-		temp[0] = 1;
-		for (int i = 1; i < temp.length; i++)
-			temp[i] = data[i - 1];
+		//byte [] temp = new byte [data.length + 1];
+		//temp[0] = 1;
+		//for (int i = 1; i < temp.length; i++)
+		//	temp[i] = data[i - 1];
 		
 		// Converts the byte array to a BigInteger value
-		BigInteger m = new BigInteger(temp);
+		BigInteger m = new BigInteger(data);
 		
 		return m.modPow(OthersEncryptValue, OthersNValue);
 	}

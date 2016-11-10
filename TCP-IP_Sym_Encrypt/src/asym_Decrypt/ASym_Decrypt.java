@@ -22,20 +22,24 @@ public class ASym_Decrypt {
 		return ByteArrayConversions.AnyTypeToByteArray(Key);
 	}
 	
+	public BigInteger getNValue () {
+		return n;
+	}
+	
 	public byte [] Decrypt (BigInteger c) {
 		// Decrypts c and converts decrypted message to byte array
 		byte [] m = c.modPow(decryptKey, n).toByteArray();
 		
 		// Creates byte array that is 1 byte smaller than decrypted array
-		byte [] temp = new byte[m.length - 1];
+		//byte [] temp = new byte[m.length - 1];
 		
 		// Copies decrypted array m to temp array but skipping the first bte of m
 		// which was byte stuffed on the encryption side
-		for (int i = 0; i < temp.length; i++)
-			temp[i] = m[i + 1];
+		//for (int i = 0; i < temp.length; i++)
+		//	temp[i] = m[i + 1];
 		
 		// Returns decrypted message without the byte stuffed at the beginning of the cipher array
-		return temp;
+		return m;
 	}
 	
 	public ASym_Decrypt() {

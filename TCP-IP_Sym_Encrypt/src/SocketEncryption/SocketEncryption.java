@@ -87,6 +87,7 @@ public class SocketEncryption extends Socket {
 		return false;
 	}
 	
+	/*
 	private byte [] ParseMessage(byte[] b, long offSet, long l) {
 		byte [] arr = new byte[(int) l];
 		for (int i = 0; i < l; i++)
@@ -94,8 +95,92 @@ public class SocketEncryption extends Socket {
 		
 		return arr;
 	}
+	*/
+	
+	private void BuildMessage(byte[] x, byte [] sourceArray, long startingByte, long totalSize, int msgSize) {
+		for (int i = 0; i < msgSize; i++) {
+			if (i == 0){
+				try {
+					byte[] v = ByteArrayConversions.LongToByteArray(totalSize);
+					
+					x[++i] = v[0];
+					x[++i] = v[1];
+					x[++i] = v[2];
+					x[++i] = v[3];
+					x[++i] = v[4];
+					x[++i] = v[5];
+					x[++i] = v[6];
+					x[++i] = v[7];
+					
+					// i will be 8 now and increment to 17 at end of for loop to begin coping message over
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+			else if (startingByte < totalSize)
+				x[i] = sourceArray[(int) startingByte++];
+			else
+				x[i] = (byte) 255;
+		}
+	}
 	
 	private void WriteMessage (byte [] x, boolean isKey) throws IOException {
+		long startingByte = 0;
+		long totalSize = x.length;
+		int msgSize = Encrypt.getOthersNValue().bitCount() / 8;			
+		byte [] msgToSend;
+		
+		// do while will break array into messageByteArraySize chunks and send them
+		// loop will exit when all bytes are sent
+		do {
+			msgToSend = new byte [ msgSize ];
+			BuildMessage(msgToSend, x, startingByte, totalSize, msgSize);
+			BigInteger c = Encrypt.Encrypt( msgToSend );
+			ooS.writeObject(c);
+		} while(startingByte < totalSize);
+	}
+	
+	private void ParseMessage (byte[] sourceArray, byte [] destArray,long startByte, long totalSize) {
+		
+		for (int i = 8; i < sourceArray.length; i++)
+			if (startByte < totalSize)
+				destArray[(int) startByte++] = sourceArray[i];
+	}
+	
+	private <T> byte [] ReadMessage() {
+		try {
+			BigInteger c = (BigInteger) oiS.readObject();
+			
+			byte [] newMSG = Decrypt.Decrypt(c);
+			
+			byte [] tSize = new byte [Long.BYTES];
+			
+			for (int i = 0; i < tSize.length; i++)
+				tSize[i] = newMSG[i + 1];
+			
+			long startingByte = 0;
+			long totalSize = ByteArrayConversions.ByteArrayToLong(tSize);
+			
+			byte [] msgRcvd = new byte [(int) totalSize];
+			
+			ParseMessage(newMSG, msgRcvd, startingByte, totalSize);
+			
+			while (startingByte < totalSize) {
+				c = (BigInteger) oiS.readObject();
+				newMSG = Decrypt.Decrypt(c);
+				ParseMessage(newMSG, msgRcvd, startingByte, totalSize);
+			}
+			
+			return msgRcvd;
+			
+		} catch (ClassNotFoundException | IOException e) {
+			e.printStackTrace();
+		}
+		
+		return null;
+	}
+	
+	/*private void WriteMessage (byte [] x, boolean isKey) throws IOException {
 		if (x.length > messageBlockByteArraySize) {
 			int segNum = 1;
 			int totalSeg;
@@ -133,9 +218,9 @@ public class SocketEncryption extends Socket {
 			BigInteger c = Encrypt.Encrypt( ByteArrayConversions.AnyTypeToByteArray(m) );
 			ooS.writeObject(c);
 		}
-	}
+	}*/
 	
-	private <T> byte [] ReadMessage() {
+	/*private <T> byte [] ReadMessage() {
 		try {
 			BigInteger c = (BigInteger) oiS.readObject();
 			EncryptionObject m = (EncryptionObject) ByteArrayConversions.ByteArrayToAnyType( Decrypt.Decrypt(c) );
@@ -168,7 +253,7 @@ public class SocketEncryption extends Socket {
 		}
 		
 		return null;
-	}
+	}*/
 	
 	private EncryptionObject CreateEncryptionObject (byte [] x, boolean isKey, int segNum, int totalSeg, long totalSize) {
 		EncryptionObject EO = new EncryptionObject();
