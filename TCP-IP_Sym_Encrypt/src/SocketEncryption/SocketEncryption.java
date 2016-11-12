@@ -28,11 +28,11 @@ public class SocketEncryption extends Socket {
 	private boolean swappedKeysOnce = false;
 	private Socket socket;
 	
-	 public SocketEncryption(Socket x) throws IOException {
-	        socket = x;
-	        outputStream = new ObjectOutputStream( x.getOutputStream() );
-	        inputStream = new ObjectInputStream( x.getInputStream() );
-	    }
+	public SocketEncryption(Socket x) throws IOException {
+		socket = x;
+		outputStream = new ObjectOutputStream( x.getOutputStream() );
+		inputStream = new ObjectInputStream( x.getInputStream() );
+	}
 	
 	public InputStream getInputStream() throws IOException {
 		return iS;
