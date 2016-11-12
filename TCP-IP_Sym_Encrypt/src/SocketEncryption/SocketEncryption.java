@@ -44,9 +44,6 @@ public class SocketEncryption extends Socket {
 	
 	public boolean SwapPublicKeys () throws Exception{
 		if ( socket.isConnected() && !swappedKeysOnce ) {			
-			// Send signature message
-			// Verify signature of remote user
-			
 			outputStream.writeObject(Decrypt.GetPublicKey());
 			swappedKeysOnce = Encrypt.ReceiveKey( (KeyObject) inputStream.readObject() );
 			
@@ -79,7 +76,7 @@ public class SocketEncryption extends Socket {
 		if (totalBytes <= RSA_MSG_Size)
 			outputStream.writeObject( Encrypt.Encrypt( sourceData ) );
 		else {
-			// do while will break array into messageByteArraySize chunks and send them
+			// do while will break array into RSA_MSG_Size chunks and send them
 			// loop will exit when all bytes are sent
 			do {
 				msgToSend = new byte [ RSA_MSG_Size ];
@@ -103,8 +100,7 @@ public class SocketEncryption extends Socket {
 	private byte [] ReadMessage() {
 		try {
 			int totalBytes = (int) ByteArrayConversions.ByteArrayToLong(Decrypt.Decrypt( (BigInteger) inputStream.readObject() ));
-			System.out.println("READMESSAGE(): totalBytes " + totalBytes );
-			
+
 			BigInteger c = (BigInteger) inputStream.readObject();
 			int RSA_MSG_Size = (Decrypt.getNValue().bitLength() / 8) - 2;
 			

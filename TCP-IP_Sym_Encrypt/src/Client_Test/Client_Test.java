@@ -9,7 +9,6 @@ import java.net.Socket;
 import java.util.Arrays;
 import java.util.Scanner;
 
-import SocketEncryption.ByteArrayConversions;
 import SocketEncryption.SocketEncryption;
 
 public class Client_Test {
@@ -43,13 +42,15 @@ public class Client_Test {
 				
 				byte [] echo = new byte [1024];
 				int len = 0;
-				int i = 0;
 				
-				while (i < 500) {
+				while (true) {
 					len = in.read(echo);
 					System.out.println("SERVER: " + new String ( Arrays.copyOfRange(echo, 0, len) ) );
+					
+					if ( (new String ( Arrays.copyOfRange(echo, 0, len) )).equals("quit") )
+						break;
+					
 					out.write(echo, 0, len);
-					i++;
 				}
 				
 				in.close();
@@ -87,17 +88,16 @@ public class Client_Test {
 				int len = 0;
 				
 				while (true) {
-					userInput = scan_in.nextLine();
-					System.out.println("CLIENT: Read " + userInput + "....sending to server." );
+					userInput = scan_in.nextLine();					
+					out.write( userInput.getBytes() );
+					
 					if (userInput.equals("quit") )
 						break;
 					
-					out.write( userInput.getBytes() );
-					
-					System.out.println("CLIENT: Waiting for reply... ");
+					System.out.print("CLIENT: Waiting for reply... ");
 					len = in.read(echo);
 					
-					System.out.println("Reply: " + (new String( Arrays.copyOfRange(echo, 0, len) ) ) );
+					System.out.println("server replied: " + (new String( Arrays.copyOfRange(echo, 0, len) ) ) );
 				}
 				in.close();
 				out.close();

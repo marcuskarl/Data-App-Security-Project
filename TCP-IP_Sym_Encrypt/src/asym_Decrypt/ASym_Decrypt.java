@@ -46,9 +46,5 @@ public class ASym_Decrypt {
 		
 		encryptKey = new BigInteger(PrimeNumberBitLength, 20, rand);
 		decryptKey = encryptKey.modInverse(z);
-		
-		System.out.println(Thread.currentThread().getId() + ":My N value: " + n);
-		System.out.println(Thread.currentThread().getId() + ":My e value: " + encryptKey);
-		System.out.println(Thread.currentThread().getId() + ":My d value: " + decryptKey);
 	}
 }

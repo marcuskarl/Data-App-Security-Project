@@ -16,9 +16,6 @@ public class ASym_Encrypt {
 			OthersEncryptValue = Key.getEncryptValue();
 			OthersNValue = Key.getNValue();
 			
-			System.out.println(Thread.currentThread().getId() + ":Others n value: " + OthersNValue);
-			System.out.println(Thread.currentThread().getId() + ":Others e value: " + OthersEncryptValue);
-			
 			return true;
 		}
 		return false;
