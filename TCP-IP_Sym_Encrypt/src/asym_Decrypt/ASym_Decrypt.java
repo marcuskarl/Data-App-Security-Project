@@ -4,7 +4,6 @@ import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Random;
 
-import SocketEncryption.ByteArrayConversions;
 import SocketEncryption.KeyObject;
 
 public class ASym_Decrypt {
@@ -13,20 +12,19 @@ public class ASym_Decrypt {
 	private BigInteger n = BigInteger.valueOf(1);
 	private int PrimeNumberBitLength = 1024;
 	
-	public byte[] GetPublicKey () {
+	public KeyObject GetPublicKey () {
 		KeyObject Key = new KeyObject();
 		Key.SetEncryptValue(encryptKey);
 		Key.SetNValue(n);
 		
-		return ByteArrayConversions.KeyObjectToByteArray(Key);
+		return Key;
 	}
 	
 	public BigInteger getNValue () {
 		return n;
 	}
 	
-	public byte [] Decrypt (byte [] x) {
-		BigInteger c = new BigInteger(x);
+	public byte [] Decrypt (BigInteger c) {
 		// Decrypts c and converts decrypted message to byte array
 		BigInteger m = c.modPow(decryptKey, n);
 		

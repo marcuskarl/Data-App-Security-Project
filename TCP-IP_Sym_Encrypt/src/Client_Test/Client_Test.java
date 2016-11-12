@@ -15,15 +15,6 @@ import SocketEncryption.SocketEncryption;
 public class Client_Test {
 
 	public static void main(String[] args) throws IOException {
-		
-		byte[] v = ByteArrayConversions.LongToByteArray(5L);
-		
-		Long y = ByteArrayConversions.ByteArrayToLong(v);
-		
-		//System.out.println("LongToByteArray length: " + v.length + " with value " + y);
-		
-		
-		
 		System.out.print("Server (1) or client mode (2) ? ");
 		
 		Scanner scan_in = new Scanner ( System.in );

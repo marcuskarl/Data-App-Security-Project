@@ -1,10 +1,11 @@
 package SocketEncryption;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.OutputStream;
+import java.math.BigInteger;
 import java.net.Socket;
 import java.util.Arrays;
 import java.util.Random;
@@ -20,8 +21,8 @@ public class SocketEncryption extends Socket {
 	// Creates and initializes InputStream and OutputStream objects
 	private OStream oS = new OStream();
 	private IStream iS = new IStream();
-	private DataInputStream inputStream = null;
-	private DataOutputStream outputStream = null;
+	private ObjectInputStream inputStream = null;
+	private ObjectOutputStream outputStream = null;
 	private ASym_Encrypt Encrypt = new ASym_Encrypt();
 	private ASym_Decrypt Decrypt = new ASym_Decrypt();
 	private boolean swappedKeysOnce = false;
@@ -29,8 +30,8 @@ public class SocketEncryption extends Socket {
 	
 	 public SocketEncryption(Socket x) throws IOException {
 	        socket = x;
-	        outputStream = new DataOutputStream( x.getOutputStream() );
-	        inputStream = new DataInputStream( x.getInputStream() );
+	        outputStream = new ObjectOutputStream( x.getOutputStream() );
+	        inputStream = new ObjectInputStream( x.getInputStream() );
 	    }
 	
 	public InputStream getInputStream() throws IOException {
@@ -46,8 +47,8 @@ public class SocketEncryption extends Socket {
 			// Send signature message
 			// Verify signature of remote user
 			
-			WriteMessage(Decrypt.GetPublicKey(), true);
-			ReadMessage();
+			outputStream.writeObject(Decrypt.GetPublicKey());
+			swappedKeysOnce = Encrypt.ReceiveKey( (KeyObject) inputStream.readObject() );
 			
 			return swappedKeysOnce;
 		}
@@ -66,31 +67,26 @@ public class SocketEncryption extends Socket {
 		return startingByte;
 	}
 	
-	private void WriteMessage (byte [] sourceData, boolean isKey) throws IOException {
-		if ( isKey ) {
-			outputStream.write( sourceData );
-		}
+	private void WriteMessage (byte [] sourceData) throws IOException {
+		int startingByte = 0;
+		int totalBytes = sourceData.length;
+		byte [] msgToSend;
+		int RSA_MSG_Size = (Encrypt.getOthersNValue().bitLength() / 8) - 2;
+		
+		// Sends size of message
+		outputStream.writeObject( Encrypt.Encrypt( ByteArrayConversions.LongToByteArray(totalBytes) ) );
+		
+		if (totalBytes <= RSA_MSG_Size)
+			outputStream.writeObject( Encrypt.Encrypt( sourceData ) );
 		else {
-			int startingByte = 0;
-			int totalSize = sourceData.length;
-			byte [] msgToSend;
-			int RSA_MSG_Size = (Encrypt.getOthersNValue().bitLength() / 8) - 2;
-			
-			// Sends size of message
-			outputStream.writeInt( totalSize );
-			
-			if (totalSize <= RSA_MSG_Size)
-				outputStream.write( Encrypt.Encrypt( sourceData ) );
-			else {
-				// do while will break array into messageByteArraySize chunks and send them
-				// loop will exit when all bytes are sent
-				do {
-					msgToSend = new byte [ RSA_MSG_Size ];
-					startingByte = BuildMessage(sourceData, msgToSend, startingByte, totalSize);
-					
-					outputStream.write( Encrypt.Encrypt( msgToSend ) );
-				} while(startingByte < totalSize);
-			}
+			// do while will break array into messageByteArraySize chunks and send them
+			// loop will exit when all bytes are sent
+			do {
+				msgToSend = new byte [ RSA_MSG_Size ];
+				startingByte = BuildMessage(sourceData, msgToSend, startingByte, totalBytes);
+				
+				outputStream.writeObject( Encrypt.Encrypt( msgToSend ) );
+			} while(startingByte < totalBytes);
 		}
 	}
 	
@@ -106,45 +102,28 @@ public class SocketEncryption extends Socket {
 	
 	private byte [] ReadMessage() {
 		try {
-			byte [] newMSG = new byte [1024];
+			int totalBytes = (int) ByteArrayConversions.ByteArrayToLong(Decrypt.Decrypt( (BigInteger) inputStream.readObject() ));
+			System.out.println("READMESSAGE(): totalBytes " + totalBytes );
 			
-			if (!swappedKeysOnce) {
-				int len = inputStream.read( newMSG );
-				byte [] msgRcvd = Arrays.copyOfRange(newMSG, 0, len);
-				swappedKeysOnce = Encrypt.ReceiveKey( msgRcvd );
-			}
+			BigInteger c = (BigInteger) inputStream.readObject();
+			int RSA_MSG_Size = (Decrypt.getNValue().bitLength() / 8) - 2;
+			
+			if (totalBytes <=  RSA_MSG_Size)
+				return Decrypt.Decrypt( c );
 			else {
-				int totalBytes = inputStream.readInt();
+				int startingByte = 0;
+				byte [] msgRcvd = new byte [totalBytes];
 				
-				System.out.println("READMESSAGE(): totalBytes " + totalBytes );
+				startingByte = ParseMessage(Decrypt.Decrypt( c ), msgRcvd, startingByte, totalBytes);
 				
-				int len = inputStream.read(newMSG);
-				
-				System.out.println("READMESSAGE(): len " + len );
-				
-				newMSG = Arrays.copyOfRange(newMSG, 0, len);
-				
-				if (len == totalBytes)
-					return Decrypt.Decrypt( newMSG );
-				else {
-					int startingByte = 0;
-					byte [] msgRcvd = new byte [(int) totalBytes];
-					
-					startingByte = ParseMessage(newMSG, msgRcvd, startingByte, totalBytes);
-					int RSA_MSG_Size = (Decrypt.getNValue().bitLength() / 8) - 2;
-					
-					while (startingByte < totalBytes) {
-						newMSG = new byte[RSA_MSG_Size];
-						len = inputStream.read(newMSG);
-						newMSG = Decrypt.Decrypt( Arrays.copyOfRange(msgRcvd, 0, len) );
-						startingByte = ParseMessage(newMSG, msgRcvd, startingByte, totalBytes);
-						System.out.println("Read: " + (new String( Arrays.copyOfRange(newMSG, 0, len) ) ) );
-					}
-					
-					return msgRcvd;
+				while (startingByte < totalBytes) {
+					c = (BigInteger) inputStream.readObject();
+					startingByte = ParseMessage(Decrypt.Decrypt( c ), msgRcvd, startingByte, totalBytes);
 				}
+				
+				return msgRcvd;
 			}
-		} catch (IOException e) {
+		} catch (IOException | ClassNotFoundException e) {
 			e.printStackTrace();
 		}
 		
@@ -155,22 +134,17 @@ public class SocketEncryption extends Socket {
 		
 		@Override
 		public void write(int b) throws IOException {
-			WriteMessage( ByteArrayConversions.ObjectToByteArray(b), false );
+			WriteMessage( ByteArrayConversions.ObjectToByteArray(b));
 		}
 		
 		@Override
 		public void write(byte [] b) throws IOException {
-			WriteMessage(b, false);
+			WriteMessage(b);
 		}
 		
 		@Override
 		public void write(byte[] b, int off, int len) throws IOException {
-			// Copies byte array from given array into a new array with specified elements to write from
-			byte [] arr = new byte[len];
-			for (int i = 0; i < len; i++)
-				arr[i] = b[off + i];
-			
-			WriteMessage(arr, false);
+			WriteMessage( Arrays.copyOfRange(b, off, off+len) );
 		}
 	}
 	

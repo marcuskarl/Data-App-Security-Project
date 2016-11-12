@@ -1,7 +1,6 @@
 package asym_Encrypt;
 
 import java.math.BigInteger;
-import SocketEncryption.ByteArrayConversions;
 import SocketEncryption.KeyObject;
 
 public class ASym_Encrypt {
@@ -12,10 +11,8 @@ public class ASym_Encrypt {
 		return OthersNValue;
 	}
 	
-	public  boolean ReceiveKey (byte [] x) {
-		if (x != null) {
-			KeyObject Key = ByteArrayConversions.ByteArrayToKeyObject(x);
-			
+	public  boolean ReceiveKey (KeyObject Key) {
+		if (Key != null) {
 			OthersEncryptValue = Key.getEncryptValue();
 			OthersNValue = Key.getNValue();
 			
@@ -27,7 +24,7 @@ public class ASym_Encrypt {
 		return false;
 	}
 	
-	public byte [] Encrypt(byte [] data) {
+	public BigInteger Encrypt(byte [] data) {
 		
 		byte [] mData = new byte [data.length + 1];
 		
@@ -39,6 +36,6 @@ public class ASym_Encrypt {
 		BigInteger m = new BigInteger(mData);
 		// Converts the byte array to a BigInteger value and encrypts then returns the value as a byte array
 		BigInteger c = m.modPow(OthersEncryptValue, OthersNValue);
-		return c.toByteArray();
+		return c;
 	}
 }
