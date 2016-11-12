@@ -9,62 +9,116 @@ import java.nio.ByteBuffer;
 
 public class ByteArrayConversions {
 	public static byte [] LongToByteArray (long x) throws IOException {
-		return ByteBuffer.allocate(8).putLong(x).array();
+		return ByteBuffer.allocate(Long.BYTES).putLong(x).array();
 	}
 	
 	public static long ByteArrayToLong (byte [] x) {
 		return ByteBuffer.wrap(x).getLong();
 	}
 	
-	public static <T> byte [] AnyTypeToByteArray (T x) {
+	public static byte [] ObjectToByteArray (Object x) {
+		ByteArrayOutputStream bos = null;
+		ObjectOutputStream oos = null;
 		try {
-			ByteArrayOutputStream bos = new ByteArrayOutputStream();
-			ObjectOutputStream oos = new ObjectOutputStream(bos);
+			bos = new ByteArrayOutputStream();
+			oos = new ObjectOutputStream(bos);
 			oos.writeObject(x);
-			oos.close();
+			oos.flush();
 			
 			return bos.toByteArray();
 			
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
+		}
+		finally {
+			try {
+				if (bos != null)
+					bos.close();
+				if (oos != null)
+					oos.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 		
 		return null;
 	}
 	
-	public static <T> byte [] AnyTypeToByteArray (T [] x) {
+	public static KeyObject ByteArrayToKeyObject (byte [] x) {
+		ByteArrayInputStream bis = null;
+		ObjectInputStream ois = null;
 		try {
-			ByteArrayOutputStream bos = new ByteArrayOutputStream();
-			ObjectOutputStream oos = new ObjectOutputStream(bos);
-			oos.writeObject(x);
-			oos.close();
-			
-			return bos.toByteArray();
-			
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
-		return null;
-	}
-	
-	@SuppressWarnings("unchecked")
-	public static <T> T ByteArrayToAnyType (byte [] x) {
-		try {
-			ByteArrayInputStream bis = new ByteArrayInputStream(x);
-	        ObjectInputStream ois;
+			bis = new ByteArrayInputStream(x);
 			ois = new ObjectInputStream(bis);
-			bis.close();
-			
-			return (T) ois.readObject();
+	        
+			return (KeyObject) ois.readObject();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
+		}
+		finally {
+			try {
+				if (bis != null)
+					bis.close();
+				if (ois != null)
+					ois.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		return null;
+    }
+	
+	public static byte [] KeyObjectToByteArray (KeyObject x) {
+		ByteArrayOutputStream bos = null;
+		ObjectOutputStream oos = null;
+		try {
+			bos = new ByteArrayOutputStream();
+			oos = new ObjectOutputStream(bos);
+			oos.writeObject(x);
+			
+			return bos.toByteArray();
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		finally {
+			try {
+				if (bos != null)
+					bos.close();
+				if (oos != null)
+					oos.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		return null;
+	}
+	
+	public static Object ByteArrayToObject (byte [] x) {
+		ByteArrayInputStream bis = null;
+		ObjectInputStream ois = null;
+		try {
+			bis = new ByteArrayInputStream(x);
+			ois = new ObjectInputStream(bis);
+	        
+			return ois.readObject();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		}
+		finally {
+			try {
+				if (bis != null)
+					bis.close();
+				if (ois != null)
+					ois.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 		return null;
     }

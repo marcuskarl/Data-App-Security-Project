@@ -4,7 +4,7 @@ import java.io.Serializable;
 import java.math.BigInteger;
 
 public class KeyObject implements Serializable {
-	private static final long serialVersionUID = 01L;
+	private static final long serialVersionUID = 05L;
 	private BigInteger EncryptValue = null;
 	private BigInteger NValue = null;
 	

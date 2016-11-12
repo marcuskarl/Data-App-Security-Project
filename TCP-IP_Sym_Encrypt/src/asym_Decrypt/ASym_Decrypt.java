@@ -1,6 +1,7 @@
 package asym_Decrypt;
 
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.Random;
 
 import SocketEncryption.ByteArrayConversions;
@@ -17,52 +18,39 @@ public class ASym_Decrypt {
 		Key.SetEncryptValue(encryptKey);
 		Key.SetNValue(n);
 		
-		System.out.println("n bit length: " + n.bitLength());
-		
-		return ByteArrayConversions.AnyTypeToByteArray(Key);
+		return ByteArrayConversions.KeyObjectToByteArray(Key);
 	}
 	
 	public BigInteger getNValue () {
 		return n;
 	}
 	
-	public byte [] Decrypt (BigInteger c) {
+	public byte [] Decrypt (byte [] x) {
+		BigInteger c = new BigInteger(x);
 		// Decrypts c and converts decrypted message to byte array
-		byte [] m = c.modPow(decryptKey, n).toByteArray();
+		BigInteger m = c.modPow(decryptKey, n);
 		
-		// Creates byte array that is 1 byte smaller than decrypted array
-		//byte [] temp = new byte[m.length - 1];
+		byte [] mData = m.toByteArray();
 		
-		// Copies decrypted array m to temp array but skipping the first bte of m
-		// which was byte stuffed on the encryption side
-		//for (int i = 0; i < temp.length; i++)
-		//	temp[i] = m[i + 1];
-		
-		// Returns decrypted message without the byte stuffed at the beginning of the cipher array
-		return m;
+		return Arrays.copyOfRange(mData, 1, mData.length);
 	}
 	
 	public ASym_Decrypt() {
-		createKeys();
-	}
-	
-	private void createKeys() {
-		Random rand = new Random( System.currentTimeMillis() );
+		Random rand = new Random();
 		BigInteger prime1 = new BigInteger(PrimeNumberBitLength, 20, rand);
 		BigInteger prime2 = new BigInteger(PrimeNumberBitLength, 20, rand);
 		BigInteger z = BigInteger.valueOf(1);
 		
-		// n = prime1
-		n = n.multiply(prime1);
 		// n = prime1 * prime2
-		n = n.multiply(prime2);
-		
-		// z = prime1 - 1
-		z = z.multiply( prime1.subtract( BigInteger.valueOf(1) ) );
+		n = prime1.multiply(prime2);
 		// z = (prime1 - 1) * (prime2 - 1)
-		z = z.multiply( prime2.subtract( BigInteger.valueOf(1)) );
-
-		encryptKey = new BigInteger(PrimeNumberBitLength * 2, 20, rand);
+		z = prime1.subtract( BigInteger.valueOf(1) ).multiply( prime2.subtract( BigInteger.valueOf(1) ) );
+		
+		encryptKey = new BigInteger(PrimeNumberBitLength, 20, rand);
 		decryptKey = encryptKey.modInverse(z);
+		
+		System.out.println(Thread.currentThread().getId() + ":My N value: " + n);
+		System.out.println(Thread.currentThread().getId() + ":My e value: " + encryptKey);
+		System.out.println(Thread.currentThread().getId() + ":My d value: " + decryptKey);
 	}
 }

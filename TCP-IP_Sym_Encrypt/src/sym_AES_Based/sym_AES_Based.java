@@ -22,8 +22,8 @@ public class sym_AES_Based {
 		SubBlockEnc = ShiftRow(SubBlockEnc, 2, blockSize);
 		SubBlockEnc = ShiftCol(SubBlockEnc, 2, blockSize);
 		
-		for (int i = 0, t = 0; i < blockSize; i++)
-			for (int j = 0; j < blockSize; j++, t++) {
+		for (int i = 0; i < blockSize; i++)
+			for (int j = 0; j < blockSize; j++) {
 				col = SubBlockEnc[i][j] % blockSize;
 				row = (int) SubBlockEnc[i][j] / blockSize;
 				
