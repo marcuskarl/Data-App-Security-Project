@@ -16,34 +16,6 @@ public class ByteArrayConversions {
 		return ByteBuffer.wrap(x).getLong();
 	}
 	
-	public static byte [] ObjectToByteArray (Object x) {
-		ByteArrayOutputStream bos = null;
-		ObjectOutputStream oos = null;
-		try {
-			bos = new ByteArrayOutputStream();
-			oos = new ObjectOutputStream(bos);
-			oos.writeObject(x);
-			oos.flush();
-			
-			return bos.toByteArray();
-			
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		finally {
-			try {
-				if (bos != null)
-					bos.close();
-				if (oos != null)
-					oos.close();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-		
-		return null;
-	}
-	
 	public static KeyObject ByteArrayToKeyObject (byte [] x) {
 		ByteArrayInputStream bis = null;
 		ObjectInputStream ois = null;
@@ -97,7 +69,25 @@ public class ByteArrayConversions {
 		return null;
 	}
 	
-	public static Object ByteArrayToObject (byte [] x) {
+	public static byte [] ObjectToByteArray (Object x) throws IOException {
+		ByteArrayOutputStream bos = null;
+		ObjectOutputStream oos = null;
+		try {
+			bos = new ByteArrayOutputStream();
+			oos = new ObjectOutputStream(bos);
+			oos.writeObject(x);
+			oos.flush();
+			
+			return bos.toByteArray();
+		} finally {
+			if (bos != null)
+				bos.close();
+			if (oos != null)
+				oos.close();
+		}
+	}
+	
+	public static Object ByteArrayToObject (byte [] x) throws IOException, ClassNotFoundException {
 		ByteArrayInputStream bis = null;
 		ObjectInputStream ois = null;
 		try {
@@ -105,21 +95,11 @@ public class ByteArrayConversions {
 			ois = new ObjectInputStream(bis);
 	        
 			return ois.readObject();
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
+		} finally {
+			if (bis != null)
+				bis.close();
+			if (ois != null)
+				ois.close();
 		}
-		finally {
-			try {
-				if (bis != null)
-					bis.close();
-				if (ois != null)
-					ois.close();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-		return null;
     }
 }

@@ -23,8 +23,8 @@ public class SocketEncryption extends Socket {
 	private IStream iS = new IStream();
 	private ObjectInputStream inputStream = null;
 	private ObjectOutputStream outputStream = null;
-	private ASym_Encrypt Encrypt = new ASym_Encrypt();
-	private ASym_Decrypt Decrypt = new ASym_Decrypt();
+	public ASym_Encrypt Encrypt = new ASym_Encrypt();
+	public ASym_Decrypt Decrypt = new ASym_Decrypt();
 	private boolean swappedKeysOnce = false;
 	private Socket socket;
 	
@@ -130,16 +130,19 @@ public class SocketEncryption extends Socket {
 		
 		@Override
 		public void write(int b) throws IOException {
+			System.out.println("in write(int b) method");
 			WriteMessage( ByteArrayConversions.ObjectToByteArray(b));
 		}
 		
 		@Override
-		public void write(byte [] b) throws IOException {
+		public void write(byte [] b) throws IOException  {
+			System.out.println("in write(byte [] b) method");
 			WriteMessage(b);
 		}
 		
 		@Override
 		public void write(byte[] b, int off, int len) throws IOException {
+			System.out.println("in write(byte[] b, int off, int len) method");
 			WriteMessage( Arrays.copyOfRange(b, off, off+len) );
 		}
 	}
@@ -147,7 +150,7 @@ public class SocketEncryption extends Socket {
 	private class IStream extends InputStream {
 		
 		@Override
-		public int read(byte [] b) throws IOException {
+		public int read(byte [] b) {
 			byte [] arr = ReadMessage();
 			
 			for (int i = 0; i < b.length && i < arr.length; i++)
@@ -157,7 +160,7 @@ public class SocketEncryption extends Socket {
 		}
 		
 		@Override
-		public int read(byte [] b, int off, int len) throws IOException {
+		public int read(byte [] b, int off, int len) {
 			byte [] arr = ReadMessage();
 			
 			for (int i = 0; i < b.length && i < arr.length && i < len; i++)
@@ -169,8 +172,16 @@ public class SocketEncryption extends Socket {
 		@Override
 		// This method needs changed.....it discards the rest of the byte array after returning
 		// the first byte
-		public int read() throws IOException {
+		public int read() {
 			return ReadMessage()[0];
 		}
+	}
+	
+	public Object readObject() throws ClassNotFoundException, IOException {
+		return ByteArrayConversions.ByteArrayToObject( ReadMessage() );
+	}
+	
+	public void writeObject(Object x) throws IOException {
+		WriteMessage( ByteArrayConversions.ObjectToByteArray( x ) );
 	}
 }

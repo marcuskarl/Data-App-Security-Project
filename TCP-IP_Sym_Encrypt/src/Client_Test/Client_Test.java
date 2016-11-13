@@ -9,6 +9,7 @@ import java.net.Socket;
 import java.util.Arrays;
 import java.util.Scanner;
 
+import SocketEncryption.KeyObject;
 import SocketEncryption.SocketEncryption;
 
 public class Client_Test {
@@ -51,6 +52,8 @@ public class Client_Test {
 						break;
 					
 					out.write(echo, 0, len);
+					System.out.println("SERVER: len=" + len + " message: " + (new String ( Arrays.copyOfRange(echo, 0, len) )) + " sent");
+					
 				}
 				
 				in.close();
@@ -89,15 +92,27 @@ public class Client_Test {
 				
 				while (true) {
 					userInput = scan_in.nextLine();					
-					out.write( userInput.getBytes() );
 					
-					if (userInput.equals("quit") )
+					if (userInput.equals("quit") ) {
+						out.write( userInput.getBytes() );
 						break;
-					
-					System.out.print("CLIENT: Waiting for reply... ");
-					len = in.read(echo);
-					
-					System.out.println("server replied: " + (new String( Arrays.copyOfRange(echo, 0, len) ) ) );
+					}
+					else if (userInput.equals("obj") ) {
+						socket.writeObject( socket.Decrypt.GetPublicKey() );
+						
+						System.out.println("CLIENT: Waiting for reply... ");
+
+						KeyObject Key = (KeyObject) socket.readObject();
+						
+						System.out.println("Server replied: " + Key.getNValue() );
+					}
+					else {
+						out.write( userInput.getBytes() );
+						System.out.print("CLIENT: Waiting for reply... ");
+						len = in.read(echo);
+						
+						System.out.println("server replied: " + (new String( Arrays.copyOfRange(echo, 0, len) ) ) );
+					}
 				}
 				in.close();
 				out.close();
