@@ -9,7 +9,6 @@ import java.net.Socket;
 import java.util.Arrays;
 import java.util.Scanner;
 
-import SocketEncryption.KeyObject;
 import SocketEncryption.SocketEncryption;
 
 public class Client_Test {
@@ -25,18 +24,25 @@ public class Client_Test {
 		
 		if (input == 1) {
 			try {
+				System.out.print("Enter approximate key bit length (min value 128): ");
+				
+				int keyLength = scan_in.nextInt();
+				scan_in.nextLine();
+				
 				ServerSocket listen = new ServerSocket(0, 1, InetAddress.getLocalHost());
 				
 				System.out.println("Server listening on: " + listen.getInetAddress().getHostAddress()
 						+ " port " + listen.getLocalPort());
 				
-				SocketEncryption socket = new SocketEncryption( listen.accept() );
+				SocketEncryption socket = new SocketEncryption( listen.accept(), keyLength );
 				//listen.close();
 				
 				if (socket.SwapPublicKeys())
 					System.out.println("SERVER: Keys swapped");
 				else
 					System.out.println("SERVER: Failed to swap keys");
+				
+				System.out.println("SERVER: Key length is: " + socket.getKeyBitLength() );
 				
 				InputStream in = socket.getInputStream();
 				OutputStream out = socket.getOutputStream();
@@ -63,12 +69,16 @@ public class Client_Test {
 			} catch (IOException e) {
 				e.printStackTrace();
 			} catch (Exception e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
-			}
+			} 
 		}
 		else if (input == 2) {
 			try {
+				System.out.print("Enter approximate key bit length (min value 128): ");
+				
+				int keyLength = scan_in.nextInt();
+				scan_in.nextLine();
+				
 				System.out.print("Enter server IP Address: ");
 				String ipAddress = scan_in.nextLine();
 				
@@ -76,12 +86,14 @@ public class Client_Test {
 				int port = scan_in.nextInt();
 				scan_in.nextLine();
 				
-				SocketEncryption socket = new SocketEncryption( new Socket (ipAddress, port) );
+				SocketEncryption socket = new SocketEncryption(new Socket (ipAddress, port), keyLength );
 				
 				if (socket.SwapPublicKeys())
 					System.out.println("CLIENT: Keys swapped");
 				else
 					System.out.println("CLIENT: Failed to swap keys");
+				
+				System.out.println("CLIENT: Key length is: " + socket.getKeyBitLength() );
 				
 				InputStream in = socket.getInputStream();
 				OutputStream out = socket.getOutputStream();
@@ -105,15 +117,6 @@ public class Client_Test {
 						byte b = (byte) len;
 						System.out.println("server replied: a=" + a + ", b=" + b);
 					}
-					else if (userInput.equals("obj") ) {
-						socket.writeObject( socket.Decrypt.GetPublicKey() );
-						
-						System.out.println("CLIENT: Waiting for reply... ");
-
-						KeyObject Key = (KeyObject) socket.readObject();
-						
-						System.out.println("Server replied: " + Key.getNValue() );
-					}
 					else {
 						out.write( userInput.getBytes() );
 						System.out.print("CLIENT: Waiting for reply... ");
@@ -128,7 +131,6 @@ public class Client_Test {
 			} catch (IOException e) {
 				e.printStackTrace();
 			} catch (Exception e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}

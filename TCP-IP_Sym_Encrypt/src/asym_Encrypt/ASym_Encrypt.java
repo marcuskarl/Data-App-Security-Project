@@ -7,8 +7,8 @@ public class ASym_Encrypt {
 	private BigInteger OthersEncryptValue;
 	private BigInteger OthersNValue;
 	
-	public BigInteger getOthersNValue () {
-		return OthersNValue;
+	public int getOthersNBitLength () {
+		return OthersNValue.bitLength();
 	}
 	
 	public  boolean ReceiveKey (KeyObject Key) {

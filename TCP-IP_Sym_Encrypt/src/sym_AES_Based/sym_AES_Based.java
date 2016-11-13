@@ -19,7 +19,7 @@ public class sym_AES_Based {
 		int row = 0,
 			col = 0;
 		
-		SubBlockEnc = ShiftRow(SubBlockEnc, 2, blockSize);
+		SubBlockEnc = ShiftColsInRows(SubBlockEnc, blockSize);
 		SubBlockEnc = ShiftCol(SubBlockEnc, 2, blockSize);
 		
 		for (int i = 0; i < blockSize; i++)
@@ -32,7 +32,6 @@ public class sym_AES_Based {
 		
 	}
 	
-	
 	public void Encrypt(byte [] x) {
 		
 		byte [][][] arr = new byte [blockCount][matrixBlock][matrixBlock];
@@ -44,7 +43,7 @@ public class sym_AES_Based {
 		
 		for (int i = 0; i < blockCount; i++)
 			for (int j = 0; j < matrixBlock; j++) {
-				arr[i] = ShiftRow(arr[i], j % matrixBlock, matrixBlock);
+				arr[i] = ShiftColsInRows(arr[i], matrixBlock);
 				arr[i] = ShiftCol(arr[i], j % matrixBlock, matrixBlock);
 		}
 		
@@ -54,12 +53,19 @@ public class sym_AES_Based {
 					x[k] = arr[i][j][l];
 	}
 	
-	private byte [][] ShiftRow(byte [][] x, int amount, int blockSize) {
+	private byte [][] ShiftColsInRows(byte [][] x, int blockSize) {
 		byte [][] arr = new byte[blockSize][blockSize];
 		
-		for (int i = 0; i < blockSize; i++)
-			for (int j = 0; j < blockSize; j++) 
-				arr[(i + amount) % blockSize][j] = x[i][j]; 
+		for (int i = 1; i < blockSize; i++)
+			if (i == 1)
+				for (int j = 0; j < blockSize; j++) 
+					arr[i][(j + 1) % blockSize] = x[i][j];
+			else if (i == 2)
+				for (int j = 0; j < blockSize; j++) 
+					arr[i][(j + 2) % blockSize] = x[i][j];
+			else if (i == 3)
+				for (int j = 0; j < blockSize; j++) 
+					arr[i][(j + 3) % blockSize] = x[i][j];
 		
 		return arr;
 	}

@@ -24,12 +24,13 @@ public class SocketEncryption extends Socket {
 	private IStream iS = new IStream();
 	private ObjectInputStream inputStream = null;
 	private ObjectOutputStream outputStream = null;
-	public ASym_Encrypt Encrypt = new ASym_Encrypt();
-	public ASym_Decrypt Decrypt = new ASym_Decrypt();
+	private ASym_Encrypt Encrypt = new ASym_Encrypt();
+	private ASym_Decrypt Decrypt = null;
 	private boolean swappedKeysOnce = false;
 	private Socket socket;
 	
-	public SocketEncryption(Socket x) throws IOException {
+	public SocketEncryption(Socket x, int keyLength) throws Exception{
+		Decrypt = new ASym_Decrypt( keyLength );
 		socket = x;
 		outputStream = new ObjectOutputStream( x.getOutputStream() );
 		inputStream = new ObjectInputStream( x.getInputStream() );
@@ -41,6 +42,10 @@ public class SocketEncryption extends Socket {
 	
 	public OutputStream getOutputStream() throws IOException {
 		return oS;
+	}
+	
+	public int getKeyBitLength () {
+		return Decrypt.getNBitLength();
 	}
 	
 	public boolean SwapPublicKeys () throws Exception{
@@ -69,7 +74,7 @@ public class SocketEncryption extends Socket {
 		int startingByte = 0;
 		int totalBytes = sourceData.length;
 		byte [] msgToSend;
-		int RSA_MSG_Size = (Encrypt.getOthersNValue().bitLength() / 8) - 2;
+		int RSA_MSG_Size = (Encrypt.getOthersNBitLength() / 8) - 2;
 		
 		// Sends size of message
 		outputStream.writeObject( Encrypt.Encrypt( ByteArrayConversions.IntToByteArray(totalBytes) ) );
@@ -98,12 +103,12 @@ public class SocketEncryption extends Socket {
 		return startByte;
 	}
 	
-	private byte [] ReadMessage() {
+	private byte [] ReadMessage() throws IOException {
 		try {
 			int totalBytes = ByteArrayConversions.ByteArrayToInt(Decrypt.Decrypt( (BigInteger) inputStream.readObject() ));
 			
 			BigInteger c = (BigInteger) inputStream.readObject();
-			int RSA_MSG_Size = (Decrypt.getNValue().bitLength() / 8) - 2;
+			int RSA_MSG_Size = (Decrypt.getNBitLength() / 8) - 2;
 			
 			if (totalBytes == 1) {
 				byte [] b = new byte[1];
@@ -120,16 +125,16 @@ public class SocketEncryption extends Socket {
 				
 				while (startingByte < totalBytes) {
 					c = (BigInteger) inputStream.readObject();
+					
 					startingByte = ParseMessage(Decrypt.Decrypt( c ), msgRcvd, startingByte, totalBytes);
 				}
 				
 				return msgRcvd;
 			}
-		} catch (IOException | ClassNotFoundException e) {
+		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
+			return null;
 		}
-		
-		return null;
 	}
 	
 	public class OStream extends OutputStream {
@@ -156,7 +161,7 @@ public class SocketEncryption extends Socket {
 		byte [] buffer = null;
 		
 		@Override
-		public int read(byte [] b) {
+		public int read(byte [] b) throws IOException {
 			if (buffer == null) {
 				buffer = ReadMessage();
 				
@@ -188,7 +193,7 @@ public class SocketEncryption extends Socket {
 		}
 		
 		@Override
-		public int read(byte [] b, int off, int len) {
+		public int read(byte [] b, int off, int len) throws IOException {
 			if (buffer == null) {
 				buffer = ReadMessage();
 				
@@ -220,7 +225,7 @@ public class SocketEncryption extends Socket {
 		}
 		
 		@Override
-		public int read() {
+		public int read() throws IOException {
 			if (buffer == null) {
 				buffer = ReadMessage();
 				
