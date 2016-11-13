@@ -7,6 +7,7 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.math.BigInteger;
 import java.net.Socket;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Random;
 
@@ -71,7 +72,7 @@ public class SocketEncryption extends Socket {
 		int RSA_MSG_Size = (Encrypt.getOthersNValue().bitLength() / 8) - 2;
 		
 		// Sends size of message
-		outputStream.writeObject( Encrypt.Encrypt( ByteArrayConversions.LongToByteArray(totalBytes) ) );
+		outputStream.writeObject( Encrypt.Encrypt( ByteArrayConversions.IntToByteArray(totalBytes) ) );
 		
 		if (totalBytes <= RSA_MSG_Size)
 			outputStream.writeObject( Encrypt.Encrypt( sourceData ) );
@@ -99,12 +100,17 @@ public class SocketEncryption extends Socket {
 	
 	private byte [] ReadMessage() {
 		try {
-			int totalBytes = (int) ByteArrayConversions.ByteArrayToLong(Decrypt.Decrypt( (BigInteger) inputStream.readObject() ));
-
+			int totalBytes = ByteArrayConversions.ByteArrayToInt(Decrypt.Decrypt( (BigInteger) inputStream.readObject() ));
+			
 			BigInteger c = (BigInteger) inputStream.readObject();
 			int RSA_MSG_Size = (Decrypt.getNValue().bitLength() / 8) - 2;
 			
-			if (totalBytes <=  RSA_MSG_Size)
+			if (totalBytes == 1) {
+				byte [] b = new byte[1];
+				b[0] = Decrypt.DecryptSingleByte( c );				
+				return b;
+			}
+			else if (totalBytes <=  RSA_MSG_Size)
 				return Decrypt.Decrypt( c );
 			else {
 				int startingByte = 0;
@@ -127,53 +133,116 @@ public class SocketEncryption extends Socket {
 	}
 	
 	public class OStream extends OutputStream {
-		
 		@Override
 		public void write(int b) throws IOException {
-			System.out.println("in write(int b) method");
-			WriteMessage( ByteArrayConversions.ObjectToByteArray(b));
+			System.out.println("Writing single byte");
+			byte [] x = new byte[1];
+			x[0] = ByteBuffer.allocate(4).putInt(b).array()[3];
+			WriteMessage( x );
 		}
 		
 		@Override
 		public void write(byte [] b) throws IOException  {
-			System.out.println("in write(byte [] b) method");
 			WriteMessage(b);
 		}
 		
 		@Override
 		public void write(byte[] b, int off, int len) throws IOException {
-			System.out.println("in write(byte[] b, int off, int len) method");
 			WriteMessage( Arrays.copyOfRange(b, off, off+len) );
 		}
 	}
 	
 	private class IStream extends InputStream {
+		byte [] buffer = null;
 		
 		@Override
 		public int read(byte [] b) {
-			byte [] arr = ReadMessage();
-			
-			for (int i = 0; i < b.length && i < arr.length; i++)
-				b[i] = arr[i];
-			
-			return arr.length;
+			if (buffer == null) {
+				buffer = ReadMessage();
+				
+				int i = 0;
+				
+				for ( ; i < b.length && i < buffer.length; i++)
+					b[i] = buffer[i];
+				
+				if (i < buffer.length)
+					buffer = Arrays.copyOfRange(buffer, i, buffer.length);
+				else
+					buffer = null;
+				
+				return i;
+			}
+			else {
+				int i = 0;
+				
+				for ( ; i < b.length && i < buffer.length; i++)
+					b[i] = buffer[i];
+				
+				if (i < buffer.length)
+					buffer = Arrays.copyOfRange(buffer, i, buffer.length);
+				else
+					buffer = null;
+				
+				return i;
+			}
 		}
 		
 		@Override
 		public int read(byte [] b, int off, int len) {
-			byte [] arr = ReadMessage();
-			
-			for (int i = 0; i < b.length && i < arr.length && i < len; i++)
-				b[i + off] = arr[i];
-			
-			return arr.length;
+			if (buffer == null) {
+				buffer = ReadMessage();
+				
+				int i = 0;
+				
+				for ( ; i < b.length && i < buffer.length && i < len; i++)
+					b[i + off] = buffer[i];
+				
+				if (i < buffer.length)
+					buffer = Arrays.copyOfRange(buffer, i, buffer.length);
+				else
+					buffer = null;
+				
+				return i;
+			}
+			else {
+				int i = 0;
+				
+				for ( ; i < b.length && i < buffer.length && i < len; i++)
+					b[i + off] = buffer[i];
+				
+				if (i < buffer.length)
+					buffer = Arrays.copyOfRange(buffer, i, buffer.length);
+				else
+					buffer = null;
+				
+				return i;
+			}
 		}
 		
 		@Override
-		// This method needs changed.....it discards the rest of the byte array after returning
-		// the first byte
 		public int read() {
-			return ReadMessage()[0];
+			if (buffer == null) {
+				buffer = ReadMessage();
+				
+				byte b = buffer[0];
+				
+				if (buffer.length > 1)
+					buffer = Arrays.copyOfRange(buffer, 1, buffer.length);
+				else
+					buffer = null;
+				
+				return b;
+			}
+			else {
+				byte b = buffer[0];
+				
+				if (buffer.length > 1)
+					buffer = Arrays.copyOfRange(buffer, 1, buffer.length);
+				else
+					buffer = null;
+				
+				return b;	
+			}
 		}
 	}
 	

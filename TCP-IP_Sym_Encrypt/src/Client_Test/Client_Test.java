@@ -97,6 +97,14 @@ public class Client_Test {
 						out.write( userInput.getBytes() );
 						break;
 					}
+					else if (userInput.equals("1") ) {
+						int a = 5023;
+						out.write( a );
+						System.out.print("CLIENT: Waiting for reply... ");
+						len = in.read();
+						byte b = (byte) len;
+						System.out.println("server replied: a=" + a + ", b=" + b);
+					}
 					else if (userInput.equals("obj") ) {
 						socket.writeObject( socket.Decrypt.GetPublicKey() );
 						

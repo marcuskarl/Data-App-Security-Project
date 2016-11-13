@@ -8,12 +8,12 @@ import java.io.ObjectOutputStream;
 import java.nio.ByteBuffer;
 
 public class ByteArrayConversions {
-	public static byte [] LongToByteArray (long x) throws IOException {
-		return ByteBuffer.allocate(Long.BYTES).putLong(x).array();
+	public static byte [] IntToByteArray (int x) throws IOException {
+		return ByteBuffer.allocate(Integer.BYTES).putInt(x).array();
 	}
 	
-	public static long ByteArrayToLong (byte [] x) {
-		return ByteBuffer.wrap(x).getLong();
+	public static int ByteArrayToInt (byte [] x) {
+		return ByteBuffer.wrap(x).getInt();
 	}
 	
 	public static KeyObject ByteArrayToKeyObject (byte [] x) {

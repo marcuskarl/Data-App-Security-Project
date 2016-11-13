@@ -33,6 +33,15 @@ public class ASym_Decrypt {
 		return Arrays.copyOfRange(mData, 1, mData.length);
 	}
 	
+	public byte DecryptSingleByte (BigInteger c) {
+		// Decrypts c and converts decrypted message to byte array
+		BigInteger m = c.modPow(decryptKey, n);
+		
+		byte [] mData = m.toByteArray();
+		
+		return mData[1];
+	}
+	
 	public ASym_Decrypt() {
 		Random rand = new Random();
 		BigInteger prime1 = new BigInteger(PrimeNumberBitLength, 20, rand);

@@ -35,4 +35,17 @@ public class ASym_Encrypt {
 		BigInteger c = m.modPow(OthersEncryptValue, OthersNValue);
 		return c;
 	}
+	
+	public BigInteger Encrypt(byte data) {
+		
+		byte [] mData = new byte [2];
+		
+		mData[0] = (byte) 1;
+		mData[1] = data;
+		
+		BigInteger m = new BigInteger(mData);
+		// Converts the byte array to a BigInteger value and encrypts then returns the value as a byte array
+		BigInteger c = m.modPow(OthersEncryptValue, OthersNValue);
+		return c;
+	}
 }
