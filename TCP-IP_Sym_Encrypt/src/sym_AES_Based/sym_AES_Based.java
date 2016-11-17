@@ -4,8 +4,9 @@ public class sym_AES_Based {
 	
 	private int blockCount = 16;
 	private int matrixBlock = 4;
-	
+	private int keyCount; // Used in Round Key
 	private byte [] key = null;
+	// Key needs a value
 	
 	private byte [][] SubBlockEnc = new byte [16][16];
 	private byte [][] SubBlockDec = new byte [16][16];
@@ -15,6 +16,14 @@ public class sym_AES_Based {
 		for (int i = 0, t = 0; i < blockSize; i++)
 			for (int j = 0; j < blockSize; j++, t++)
 				SubBlockEnc[i][j] = (byte) t;
+		
+		// Added some skeleton code for key generation. Don't know what we're doing here.
+		// It's necessary for the XOR operation in AddRoundKey
+		key = new byte [256];
+		keyCount = 0;
+		for (int i = 0; i < key.length; i++) {
+			// Whatever we're doing to generate the key
+		}
 		
 		int row = 0,
 			col = 0;
@@ -33,6 +42,8 @@ public class sym_AES_Based {
 	}
 	
 	public void Encrypt(byte [] x) {
+		// Resets keyCount every encrypt
+		keyCount = 0;
 		
 		byte [][][] arr = new byte [blockCount][matrixBlock][matrixBlock];
 		
@@ -45,6 +56,7 @@ public class sym_AES_Based {
 			for (int j = 0; j < matrixBlock; j++) {
 				arr[i] = ShiftColsInRows(arr[i], matrixBlock);
 				arr[i] = ShiftCol(arr[i], j % matrixBlock, matrixBlock);
+				arr[i] = AddRoundKey(arr[i], j % matrixBlock, martrixBlock); // Think this would go here
 		}
 		
 		for (int i = 0, k = 0; i < blockCount; i++)
@@ -79,7 +91,19 @@ public class sym_AES_Based {
 		
 		return arr;
 	}
-
+	
+	// Algorithm should be sound. The only thing I'm unsure of is placement in the encryption algorithm
+	private byte [][] AddRoundKey(byte[][] x, int amount, int blockSize) {
+		byte [][] arr = new byte [blockSize][blockSize];
+		for (int i = 0; i < blockSize; i++) {
+			for (int j = 0; j < blockSize; j++) {
+				arr[i][j] = (byte) (x[i][(j + amount) % blockSize] ^ key[keyCount]); // XORs Key with array to get round key
+				keyCount++; // Increments keyCount to use next part of key
+			}
+		}
+		return arr;
+	}
+	
 	private byte [][] SubEncrypyt(byte [][] x, int blockSize) {
 		byte [][] arr = new byte [blockSize][blockSize];
 		int col = 0,
