@@ -18,50 +18,7 @@ public class Client_Test {
 
 	public static void main(String[] args) throws IOException {
 		
-		Random rand = new Random();
-		
-		byte [] AES_Test1 = new byte [256];
-		
-		for (int i = 0; i < AES_Test1.length; i++)
-			AES_Test1[i] = (byte) rand.nextInt(10);
-		
-		
-		sym_AES_Based t = new sym_AES_Based();
-		
-		byte [] s = Arrays.copyOf(AES_Test1, AES_Test1.length);
-		
-		
-		
-		System.out.print("\nUncrypt Version: ");
-		
-		
-		for (int i = 0; i < 256; i++)
-			System.out.print(Byte.toUnsignedInt(s[i]) + " ");
-		
-		t.Encrypt(AES_Test1);
-		
-		System.out.print("\nEncrypt Version: ");
-		
-		
-		for (int i = 0; i < 256; i++)
-			System.out.print(Byte.toUnsignedInt( AES_Test1[i] ) + " ");
-		
-		t.Decrypt(AES_Test1);
-		
-		System.out.print("\nDecrypt Version: ");
-		
-		
-		for (int i = 0; i < 256; i++)
-			System.out.print(Byte.toUnsignedInt( AES_Test1[i] ) + " ");
-		
-		
-		System.out.println();
-		System.out.println();
-		System.out.println();
-		
-		/*
-		
-		System.out.print("\nServer (1) or client mode (2) ? ");
+		System.out.print("Server (1) or client mode (2) ? ");
 		
 		Scanner scan_in = new Scanner ( System.in );
 		
@@ -183,7 +140,5 @@ public class Client_Test {
 		}
 		
 		scan_in.close();
-		 */
-		
 		}
 }

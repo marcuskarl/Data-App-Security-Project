@@ -13,6 +13,7 @@ import java.util.Random;
 
 import asym_Decrypt.ASym_Decrypt;
 import asym_Encrypt.ASym_Encrypt;
+import sym_AES_Based.sym_AES_Based;
 
 // Class extends Socket in order to override read and write methods from inputstream and outputstream
 // The methods are overridden in order to provide a seam less opportunity to user for encryption and decryption
@@ -26,6 +27,7 @@ public class SocketEncryption extends Socket {
 	private ObjectOutputStream outputStream = null;
 	private ASym_Encrypt Encrypt = new ASym_Encrypt();
 	private ASym_Decrypt Decrypt = null;
+	private sym_AES_Based Sym_Cipher = new sym_AES_Based();
 	private boolean swappedKeysOnce = false;
 	private Socket socket;
 	
