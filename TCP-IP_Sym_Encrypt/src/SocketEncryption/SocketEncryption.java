@@ -122,13 +122,12 @@ public class SocketEncryption extends Socket {
 	private void WriteAESMessage (byte [] sourceData) throws IOException {
 		int startingByte = 0;
 		int totalBytes = sourceData.length;
-		byte [] msgToSend;
+		byte [] msgToSend = new byte [256];
 		
 		byte [] countByteArray = ByteArrayConversions.IntToByteArray(totalBytes);
-		byte [] msg = new byte [256];
 		// Sends size of message
-		BuildMessage(countByteArray, msg, 0, countByteArray.length);
-		outputStream.write( Sym_Cipher.Encrypt( msg ) );
+		BuildMessage(countByteArray, msgToSend, 0, countByteArray.length);
+		outputStream.write( Sym_Cipher.Encrypt( msgToSend ) );
 		
 		// do while will break array into 256 byte chunks chunks and send them
 		// loop will exit when all bytes are sent
@@ -190,7 +189,8 @@ public class SocketEncryption extends Socket {
 		byte [] msg = new byte [256];
 		inputStream.read(msg);
 		
-		int totalBytes = ByteArrayConversions.ByteArrayToInt( Sym_Cipher.Decrypt( msg ) );
+		byte [] countSize = Sym_Cipher.Decrypt( msg );
+		int totalBytes = ByteArrayConversions.ByteArrayToInt( Arrays.copyOfRange(countSize, 0, 4) );
 		
 		if (totalBytes == 1) {
 			inputStream.read(msg);
@@ -202,17 +202,13 @@ public class SocketEncryption extends Socket {
 		else {
 			int startingByte = 0;
 			byte [] msgRcvd = new byte [totalBytes];
-			msg = new byte [256];
-			inputStream.read(msg);
 			
-			startingByte = ParseMessage(Sym_Cipher.Decrypt( msg ), msgRcvd, startingByte, totalBytes);
-			
-			while (startingByte < totalBytes) {
+			do {
 				msg = new byte [256];
 				inputStream.read(msg);
 				
 				startingByte = ParseMessage(Sym_Cipher.Decrypt( msg ), msgRcvd, startingByte, totalBytes);
-			}
+			} while (startingByte < totalBytes);
 			
 			return msgRcvd;
 		}
@@ -221,11 +217,10 @@ public class SocketEncryption extends Socket {
 	private byte [] ReadRSAMessage() throws IOException {
 		try {
 			int totalBytes = 0;
-			int RSA_MSG_Size = (Decrypt.getNBitLength() / 8) - 2;
 			
 			if (useAES) {
-				byte [] countSize = ReadAESMessage();
-				totalBytes = ByteArrayConversions.ByteArrayToInt( Decrypt.Decrypt( new BigInteger( countSize ) ) );
+				byte [] countSize = Decrypt.Decrypt( new BigInteger( ReadAESMessage() ) );
+				totalBytes = ByteArrayConversions.ByteArrayToInt( countSize );
 			}
 			else
 				totalBytes = ByteArrayConversions.ByteArrayToInt(Decrypt.Decrypt( (BigInteger) objectInputStream.readObject() ));
@@ -242,32 +237,20 @@ public class SocketEncryption extends Socket {
 					return b;
 				}
 			}
-			else if (totalBytes <=  RSA_MSG_Size)
-				if (useAES)
-					return Decrypt.Decrypt( new BigInteger( ReadAESMessage() ) );
-				else
-					return Decrypt.Decrypt( (BigInteger) objectInputStream.readObject() );
 			else {
 				BigInteger c;
-				
-				if (useAES)
-					c = new BigInteger( ReadAESMessage() );
-				else
-					c = (BigInteger) objectInputStream.readObject();
 				
 				int startingByte = 0;
 				byte [] msgRcvd = new byte [totalBytes];
 				
-				startingByte = ParseMessage(Decrypt.Decrypt( c ), msgRcvd, startingByte, totalBytes);
-				
-				while (startingByte < totalBytes) {
+				do {
 					if (useAES)
 						c = new BigInteger( ReadAESMessage() );
 					else
 						c = (BigInteger) objectInputStream.readObject();
 					
 					startingByte = ParseMessage(Decrypt.Decrypt( c ), msgRcvd, startingByte, totalBytes);
-				}
+				} while (startingByte < totalBytes);
 				
 				return msgRcvd;
 			}
