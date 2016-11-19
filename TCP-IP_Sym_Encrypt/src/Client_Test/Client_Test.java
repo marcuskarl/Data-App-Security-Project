@@ -38,15 +38,10 @@ public class Client_Test {
 				System.out.println("Server listening on: " + listen.getInetAddress().getHostAddress()
 						+ " port " + listen.getLocalPort());
 				
-				SocketEncryption socket = new SocketEncryption( listen.accept(), keyLength );
+				SocketEncryption socket = new SocketEncryption( listen.accept(), keyLength, "", false );
 				//listen.close();
 				
-				if (socket.SwapPublicKeys())
-					System.out.println("SERVER: Keys swapped");
-				else
-					System.out.println("SERVER: Failed to swap keys");
-				
-				System.out.println("SERVER: Key length is: " + socket.getKeyBitLength() );
+				//System.out.println("SERVER: Key length is: " + socket.getKeyBitLength() );
 				
 				InputStream in = socket.getInputStream();
 				OutputStream out = socket.getOutputStream();
@@ -90,14 +85,9 @@ public class Client_Test {
 				int port = scan_in.nextInt();
 				scan_in.nextLine();
 				
-				SocketEncryption socket = new SocketEncryption(new Socket (ipAddress, port), keyLength );
-				
-				if (socket.SwapPublicKeys())
-					System.out.println("CLIENT: Keys swapped");
-				else
-					System.out.println("CLIENT: Failed to swap keys");
-				
-				System.out.println("CLIENT: Key length is: " + socket.getKeyBitLength() );
+				SocketEncryption socket = new SocketEncryption(new Socket (ipAddress, port), keyLength, "", false );
+								
+				//System.out.println("CLIENT: Key length is: " + socket.getKeyBitLength() );
 				
 				InputStream in = socket.getInputStream();
 				OutputStream out = socket.getOutputStream();

@@ -1,16 +1,21 @@
 package sym_AES_Based;
 
+import java.math.BigInteger;
+
 public class sym_AES_Based {
 	
 	private int blockCount = 16;
 	private int matrixBlock = 4;
-	private String String_key = "250219206866755364471960248037233305641";	// 128 bit generated prime
-	private byte [] key = String_key.getBytes();
+	private String String_key = null;
+	private byte [] key = null;
 	
 	private byte [][] SubBlockEnc = null;
 	private byte [][] SubBlockDec = null;
 	
 	public sym_AES_Based () {
+		String_key = "250219206866755364471960248037233305641";	// 128 bit generated prime
+		key = String_key.getBytes();
+		
 		int blockSize = 16;
 		
 		SubBlockEnc = new byte [blockSize][blockSize];
@@ -44,7 +49,48 @@ public class sym_AES_Based {
 			}
 	}
 	
-	public void Encrypt(byte [] x) {
+	public sym_AES_Based (String s) throws Exception {
+		String_key = s;				// Custom 128 bit key from user
+		
+		if ( (new BigInteger( s.getBytes() ) ).bitLength() != 128 )
+			throw new Exception("Key bit length is not 128 bits!");
+		
+		key = String_key.getBytes();
+		
+		int blockSize = 16;
+		
+		SubBlockEnc = new byte [blockSize][blockSize];
+		SubBlockDec = new byte [blockSize][blockSize];
+		
+		// Fills SubBlockEnc with values from 0 to 255 in sequential order
+		for (int i = 0, t = 0; i < blockSize; i++)
+			for (int j = 0; j < blockSize; j++, t++)
+				SubBlockEnc[i][j] = (byte) t;
+		
+		// Scrambles SubBlockEnc using key decimal values and shifting of rows within cols 
+		// and cols within rows by varying amounts
+		for (int i = 0; i < String_key.length(); i++){
+			SubBlockEnc = ShiftColInRowEncrypt(SubBlockEnc, String_key.charAt(i++), blockSize);
+			
+			if (i < String_key.length())
+				SubBlockEnc = ShiftRowInColEncrypt(SubBlockEnc, String_key.charAt(i), blockSize);
+		}
+		
+		int row = 0,
+			col = 0;
+		
+		// Builds up a SubBlockDec matrix of original values in matrix position
+		// is used to reverse the byte substitution
+		for (int i = 0; i < blockSize; i++)
+			for (int j = 0; j < blockSize; j++) {
+				col = Math.floorMod(Byte.toUnsignedInt(SubBlockEnc[i][j]), blockSize);
+				row = Byte.toUnsignedInt(SubBlockEnc[i][j]) / blockSize;
+				
+				SubBlockDec[row][col] = (byte) ( (i * blockSize) + j);
+			}
+	}
+	
+	public byte [] Encrypt(byte [] x) {
 		byte [][][] arr = new byte [blockCount][matrixBlock][matrixBlock];
 		
 		// Copies original array into 3D array for scrambling values
@@ -62,14 +108,18 @@ public class sym_AES_Based {
 				arr[i] = XORRoundKey(arr[i], matrixBlock);
 		}
 		
-		// Copies 3D array back into original array
+		byte [] y = new byte [256];
+		
+		// Copies 3D array back into new single dimension array
 		for (int i = 0, k = 0; i < blockCount; i++)
 			for (int j = 0; j < matrixBlock; j++)
 				for (int l = 0; l < matrixBlock && k < x.length; l++, k++)
-					x[k] = arr[i][j][l];
+					y[k] = arr[i][j][l];
+		
+		return y;
 	}
 	
-	public void Decrypt(byte [] x) {
+	public byte [] Decrypt(byte [] x) {
 		byte [][][] arr = new byte [blockCount][matrixBlock][matrixBlock];
 		
 		// Copies original array into 3D array for scrambling values
@@ -87,11 +137,15 @@ public class sym_AES_Based {
 				arr[i] = SubDecrypt(arr[i], matrixBlock);
 		}
 		
+		byte [] y = new byte [256];
+		
 		// Copies 3D array back into original array
 		for (int i = 0, k = 0; i < blockCount; i++)
 			for (int j = 0; j < matrixBlock; j++)
 				for (int l = 0; l < matrixBlock && k < x.length; l++, k++)
-					x[k] = arr[i][j][l];
+					y[k] = arr[i][j][l];
+		
+		return y;
 	}
 	
 	private byte [][] XORRoundKey(byte[][] x, int blockSize) {

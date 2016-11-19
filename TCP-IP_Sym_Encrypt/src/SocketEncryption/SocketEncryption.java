@@ -23,19 +23,59 @@ public class SocketEncryption extends Socket {
 	// Creates and initializes InputStream and OutputStream objects
 	private OStream oS = new OStream();
 	private IStream iS = new IStream();
-	private ObjectInputStream inputStream = null;
-	private ObjectOutputStream outputStream = null;
+	private ObjectInputStream objectInputStream = null;
+	private ObjectOutputStream objectOutputStream = null;
+	private InputStream inputStream = null;
+	private OutputStream outputStream = null;
 	private ASym_Encrypt Encrypt = new ASym_Encrypt();
 	private ASym_Decrypt Decrypt = null;
-	private sym_AES_Based Sym_Cipher = new sym_AES_Based();
-	private boolean swappedKeysOnce = false;
+	private sym_AES_Based Sym_Cipher = null;
+	private boolean swappedRSAKeys = false;
+	private boolean useRSA = false;
+	private boolean useAES = true;
 	private Socket socket;
 	
-	public SocketEncryption(Socket x, int keyLength) throws Exception{
-		Decrypt = new ASym_Decrypt( keyLength );
+	public SocketEncryption(Socket x, int RSAKeyLength) throws Exception{
+		useRSA = true;
+		useAES = false;
+		
+		Decrypt = new ASym_Decrypt( RSAKeyLength );
 		socket = x;
-		outputStream = new ObjectOutputStream( x.getOutputStream() );
-		inputStream = new ObjectInputStream( x.getInputStream() );
+		objectOutputStream = new ObjectOutputStream( x.getOutputStream() );
+		objectInputStream = new ObjectInputStream( x.getInputStream() );
+		
+		SwapRSAPublicKeys();
+	}
+	
+	public SocketEncryption(Socket x, int RSAKeyLength, String AESKey, boolean UseCustomAESKey) throws Exception{
+		useRSA = true;
+		
+		Decrypt = new ASym_Decrypt( RSAKeyLength );
+		
+		if (UseCustomAESKey)
+			Sym_Cipher = new sym_AES_Based(AESKey);
+		else
+			Sym_Cipher = new sym_AES_Based();
+		
+		socket = x;
+		objectOutputStream = new ObjectOutputStream( x.getOutputStream() );
+		objectInputStream = new ObjectInputStream( x.getInputStream() );
+		
+		outputStream = x.getOutputStream();
+		inputStream = x.getInputStream();
+		
+		SwapRSAPublicKeys();
+	}
+	
+	public SocketEncryption(Socket x, String AESKey, boolean UseCustomAESKey) throws Exception{
+		if (UseCustomAESKey)
+			Sym_Cipher = new sym_AES_Based(AESKey);
+		else
+			Sym_Cipher = new sym_AES_Based();
+		
+		socket = x;
+		outputStream = x.getOutputStream();
+		inputStream = x.getInputStream();
 	}
 	
 	public InputStream getInputStream() throws IOException {
@@ -50,18 +90,18 @@ public class SocketEncryption extends Socket {
 		return Decrypt.getNBitLength();
 	}
 	
-	public boolean SwapPublicKeys () throws Exception{
-		if ( socket.isConnected() && !swappedKeysOnce ) {			
-			outputStream.writeObject(Decrypt.GetPublicKey());
-			swappedKeysOnce = Encrypt.ReceiveKey( (KeyObject) inputStream.readObject() );
-			
-			return swappedKeysOnce;
+	public void SwapRSAPublicKeys () throws Exception{
+		if ( socket.isConnected() && !swappedRSAKeys ) {			
+			objectOutputStream.writeObject(Decrypt.GetPublicKey());
+			swappedRSAKeys = Encrypt.ReceiveKey( (KeyObject) objectInputStream.readObject() );
+		
+			if (!swappedRSAKeys)
+				throw new Exception("Failed to exchange RSA Keys!");
 		}
-		return false;
 	}
 	
 	private int BuildMessage(byte [] sourceArray, byte[] destArray, int startingByte, int totalSize) {
-		Random rand = new Random( System.currentTimeMillis() );
+		Random rand = new Random();
 		for (int i = 0; i < destArray.length; i++) {
 			if (startingByte < totalSize)
 				destArray[i] = sourceArray[startingByte++];
@@ -73,16 +113,51 @@ public class SocketEncryption extends Socket {
 	}
 	
 	private void WriteMessage (byte [] sourceData) throws IOException {
+		if (useRSA)
+			WriteRSAMessage(sourceData);
+		else
+			WriteAESMessage(sourceData);
+	}
+	
+	private void WriteAESMessage (byte [] sourceData) throws IOException {
+		int startingByte = 0;
+		int totalBytes = sourceData.length;
+		byte [] msgToSend;
+		
+		byte [] countByteArray = ByteArrayConversions.IntToByteArray(totalBytes);
+		byte [] msg = new byte [256];
+		// Sends size of message
+		BuildMessage(countByteArray, msg, 0, countByteArray.length);
+		outputStream.write( Sym_Cipher.Encrypt( msg ) );
+		
+		// do while will break array into 256 byte chunks chunks and send them
+		// loop will exit when all bytes are sent
+		do {
+			msgToSend = new byte [ 256 ];
+			startingByte = BuildMessage(sourceData, msgToSend, startingByte, totalBytes);
+			
+			outputStream.write( Sym_Cipher.Encrypt( msgToSend ) );
+		} while(startingByte < totalBytes);
+	
+	}
+	
+	private void WriteRSAMessage (byte [] sourceData) throws IOException {
 		int startingByte = 0;
 		int totalBytes = sourceData.length;
 		byte [] msgToSend;
 		int RSA_MSG_Size = (Encrypt.getOthersNBitLength() / 8) - 2;
 		
 		// Sends size of message
-		outputStream.writeObject( Encrypt.Encrypt( ByteArrayConversions.IntToByteArray(totalBytes) ) );
+		if (useAES)
+			WriteAESMessage( Encrypt.Encrypt( ByteArrayConversions.IntToByteArray(totalBytes) ).toByteArray() );
+		else
+			objectOutputStream.writeObject( Encrypt.Encrypt( ByteArrayConversions.IntToByteArray(totalBytes) ) );
 		
 		if (totalBytes <= RSA_MSG_Size)
-			outputStream.writeObject( Encrypt.Encrypt( sourceData ) );
+			if (useAES)
+				WriteAESMessage( Encrypt.Encrypt( sourceData ).toByteArray() );
+			else
+				objectOutputStream.writeObject( Encrypt.Encrypt( sourceData ) );
 		else {
 			// do while will break array into RSA_MSG_Size chunks and send them
 			// loop will exit when all bytes are sent
@@ -90,7 +165,11 @@ public class SocketEncryption extends Socket {
 				msgToSend = new byte [ RSA_MSG_Size ];
 				startingByte = BuildMessage(sourceData, msgToSend, startingByte, totalBytes);
 				
-				outputStream.writeObject( Encrypt.Encrypt( msgToSend ) );
+				if (useAES)
+					WriteAESMessage( Encrypt.Encrypt( msgToSend ).toByteArray() );
+				else
+					objectOutputStream.writeObject( Encrypt.Encrypt( msgToSend ) );
+			
 			} while(startingByte < totalBytes);
 		}
 	}
@@ -106,27 +185,92 @@ public class SocketEncryption extends Socket {
 	}
 	
 	private byte [] ReadMessage() throws IOException {
-		try {
-			int totalBytes = ByteArrayConversions.ByteArrayToInt(Decrypt.Decrypt( (BigInteger) inputStream.readObject() ));
+		if (useRSA)
+			return ReadRSAMessage();
+		else
+			return ReadAESMessage();
+	}
+	
+	private byte [] ReadAESMessage() throws IOException {
+	
+		byte [] msg = new byte [256];
+		inputStream.read(msg);
+		
+		int totalBytes = ByteArrayConversions.ByteArrayToInt( Sym_Cipher.Decrypt( msg ) );
+		
+		if (totalBytes == 1) {
+			inputStream.read(msg);
 			
-			BigInteger c = (BigInteger) inputStream.readObject();
+			byte [] b = new byte[1];
+			b[0] = Sym_Cipher.Decrypt( msg )[0];				
+			return b;
+		}
+		else {
+			int startingByte = 0;
+			byte [] msgRcvd = new byte [totalBytes];
+			msg = new byte [256];
+			inputStream.read(msg);
+			
+			startingByte = ParseMessage(Sym_Cipher.Decrypt( msg ), msgRcvd, startingByte, totalBytes);
+			
+			while (startingByte < totalBytes) {
+				msg = new byte [256];
+				inputStream.read(msg);
+				
+				startingByte = ParseMessage(Sym_Cipher.Decrypt( msg ), msgRcvd, startingByte, totalBytes);
+			}
+			
+			return msgRcvd;
+		}
+	}
+	
+	private byte [] ReadRSAMessage() throws IOException {
+		try {
+			int totalBytes = 0;
 			int RSA_MSG_Size = (Decrypt.getNBitLength() / 8) - 2;
 			
+			if (useAES) {
+				byte [] countSize = ReadAESMessage();
+				totalBytes = ByteArrayConversions.ByteArrayToInt( Decrypt.Decrypt( new BigInteger( countSize ) ) );
+			}
+			else
+				totalBytes = ByteArrayConversions.ByteArrayToInt(Decrypt.Decrypt( (BigInteger) objectInputStream.readObject() ));
+			
 			if (totalBytes == 1) {
-				byte [] b = new byte[1];
-				b[0] = Decrypt.DecryptSingleByte( c );				
-				return b;
+				if (useAES) {
+					byte [] b = new byte[1];
+					b[0] = Decrypt.DecryptSingleByte( new BigInteger( ReadAESMessage()) );
+					return b;
+				}
+				else {
+					byte [] b = new byte[1];
+					b[0] = Decrypt.DecryptSingleByte( (BigInteger) objectInputStream.readObject() );				
+					return b;
+				}
 			}
 			else if (totalBytes <=  RSA_MSG_Size)
-				return Decrypt.Decrypt( c );
+				if (useAES)
+					return Decrypt.Decrypt( new BigInteger( ReadAESMessage() ) );
+				else
+					return Decrypt.Decrypt( (BigInteger) objectInputStream.readObject() );
 			else {
+				BigInteger c;
+				
+				if (useAES)
+					c = new BigInteger( ReadAESMessage() );
+				else
+					c = (BigInteger) objectInputStream.readObject();
+				
 				int startingByte = 0;
 				byte [] msgRcvd = new byte [totalBytes];
 				
 				startingByte = ParseMessage(Decrypt.Decrypt( c ), msgRcvd, startingByte, totalBytes);
 				
 				while (startingByte < totalBytes) {
-					c = (BigInteger) inputStream.readObject();
+					if (useAES)
+						c = new BigInteger( ReadAESMessage() );
+					else
+						c = (BigInteger) objectInputStream.readObject();
 					
 					startingByte = ParseMessage(Decrypt.Decrypt( c ), msgRcvd, startingByte, totalBytes);
 				}
@@ -142,7 +286,6 @@ public class SocketEncryption extends Socket {
 	public class OStream extends OutputStream {
 		@Override
 		public void write(int b) throws IOException {
-			System.out.println("Writing single byte");
 			byte [] x = new byte[1];
 			x[0] = ByteBuffer.allocate(4).putInt(b).array()[3];
 			WriteMessage( x );
