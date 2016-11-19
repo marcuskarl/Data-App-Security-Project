@@ -104,7 +104,7 @@ public class Client_Test {
 						break;
 					}
 					else if (userInput.equals("1") ) {
-						int a = 5023;
+						int a = 24;
 						out.write( a );
 						System.out.print("CLIENT: Waiting for reply... ");
 						len = in.read();

@@ -153,25 +153,19 @@ public class SocketEncryption extends Socket {
 		else
 			objectOutputStream.writeObject( Encrypt.Encrypt( ByteArrayConversions.IntToByteArray(totalBytes) ) );
 		
-		if (totalBytes <= RSA_MSG_Size)
-			if (useAES)
-				WriteAESMessage( Encrypt.Encrypt( sourceData ).toByteArray() );
-			else
-				objectOutputStream.writeObject( Encrypt.Encrypt( sourceData ) );
-		else {
-			// do while will break array into RSA_MSG_Size chunks and send them
-			// loop will exit when all bytes are sent
-			do {
-				msgToSend = new byte [ RSA_MSG_Size ];
-				startingByte = BuildMessage(sourceData, msgToSend, startingByte, totalBytes);
-				
-				if (useAES)
-					WriteAESMessage( Encrypt.Encrypt( msgToSend ).toByteArray() );
-				else
-					objectOutputStream.writeObject( Encrypt.Encrypt( msgToSend ) );
+		// do while will break array into RSA_MSG_Size chunks and send them
+		// loop will exit when all bytes are sent
+		do {
+			msgToSend = new byte [ RSA_MSG_Size ];
+			startingByte = BuildMessage(sourceData, msgToSend, startingByte, totalBytes);
 			
-			} while(startingByte < totalBytes);
-		}
+			if (useAES)
+				WriteAESMessage( Encrypt.Encrypt( msgToSend ).toByteArray() );
+			else
+				objectOutputStream.writeObject( Encrypt.Encrypt( msgToSend ) );
+		
+		} while(startingByte < totalBytes);
+	
 	}
 	
 	private int ParseMessage (byte[] sourceArray, byte [] destArray, int startByte, int totalSize) {
